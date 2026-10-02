@@ -583,14 +583,16 @@ export function SwarolipiLanding() {
               return (
                 <ScrollReveal key={pt.title} direction="up" delay={i * 0.1} distance={30}>
                   <motion.div
-                    whileHover={reduced ? {} : { y: -5 }}
-                    className="h-full rounded-2xl border border-purple-500/15 bg-card/60 backdrop-blur-xl p-6 shadow-sm transition-all hover:border-purple-500/40 hover:bg-card/80 hover:shadow-[0_0_25px_-5px_rgba(139,92,246,0.2)]"
+                    whileHover={reduced ? {} : { y: -8 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="group relative h-full overflow-hidden rounded-2xl border border-purple-500/15 bg-card/60 backdrop-blur-xl p-6 shadow-sm transition-all duration-300 hover:border-purple-500/40 hover:bg-card/85 hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.25)]"
                   >
-                    <span className="grid size-10 place-items-center rounded-xl bg-purple-950/40 border border-purple-500/20 text-purple-300 mb-4">
+                    <span className="grid size-10 place-items-center rounded-xl bg-purple-950/40 border border-purple-500/20 text-purple-300 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:border-purple-400/40 group-hover:shadow-[0_0_15px_rgba(139,92,246,0.3)]">
                       <Icon className="size-5" />
                     </span>
                     <h3 className="text-base font-bold text-foreground">{pt.title}</h3>
                     <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{pt.body}</p>
+                    <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </motion.div>
                 </ScrollReveal>
               );
