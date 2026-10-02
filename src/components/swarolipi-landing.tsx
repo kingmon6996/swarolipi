@@ -35,6 +35,7 @@ import { formatAddress } from "@/components/WalletStatus";
 import { AnimatedText } from "@/components/animated-text";
 import { ScrollReveal, SectionReveal, ParallaxElement } from "@/components/scroll-reveal";
 import { ShinyButton } from "@/components/ui/shiny-button";
+import { FluidCursor } from "@/components/ui/fluid-cursor";
 
 const navItems = ["Product", "How It Works", "Security", "Developers"];
 
@@ -225,6 +226,7 @@ export function SwarolipiLanding() {
 
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      <FluidCursor />
       {/* ================= TOP HEADER (Visible when at top) ================= */}
       <motion.header
         animate={{
@@ -621,7 +623,7 @@ export function SwarolipiLanding() {
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={0.4} distance={20}>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <div data-no-cursor="true" className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               {isConnected ? (
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button size="lg" variant="swarolipi" onClick={goToDashboard} className="gap-2 shadow-md w-full sm:w-auto">
