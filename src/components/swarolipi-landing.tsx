@@ -34,6 +34,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { formatAddress } from "@/components/WalletStatus";
 import { AnimatedText } from "@/components/animated-text";
 import { ScrollReveal, SectionReveal, ParallaxElement } from "@/components/scroll-reveal";
+import { ShinyButton } from "@/components/ui/shiny-button";
 
 const navItems = ["Product", "How It Works", "Security", "Developers"];
 
@@ -456,11 +457,9 @@ export function SwarolipiLanding() {
                 </Button>
               </motion.div>
             )}
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button size="lg" variant="swarolipiOutline" onClick={goToDeveloperDemo} className="w-full sm:w-auto">
-                Explore Developer Platform
-              </Button>
-            </motion.div>
+            <ShinyButton onClick={goToDeveloperDemo} className="w-full sm:w-auto">
+              Explore Developer Platform
+            </ShinyButton>
           </motion.div>
 
           <motion.p
