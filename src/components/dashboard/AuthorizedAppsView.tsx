@@ -22,7 +22,7 @@ export function AuthorizedAppsView() {
   const handleRevoke = (appId: string, appName: string) => {
     revokeApp(appId);
     toast.success("Authorization Revoked", {
-      description: `${appName} can no longer access your VoxAuth identity signals.`,
+      description: `${appName} can no longer access your Swarolipi identity signals.`,
     });
   };
 
@@ -54,12 +54,12 @@ export function AuthorizedAppsView() {
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm max-w-2xl">
-              Third-party decentralized applications with active access to your VoxAuth zero-knowledge identity signals. You can review permission scopes or revoke access anytime.
+              Third-party decentralized applications with active access to your Swarolipi zero-knowledge identity signals. You can review permission scopes or revoke access anytime.
             </p>
           </div>
 
           <Link to="/developer/demo">
-            <Button variant="voxauthOutline" size="sm" className="gap-1.5 text-xs whitespace-nowrap">
+            <Button variant="swarolipiOutline" size="sm" className="gap-1.5 text-xs whitespace-nowrap">
               Test Developer Demo <ExternalLink className="size-3.5" />
             </Button>
           </Link>
@@ -86,7 +86,7 @@ export function AuthorizedAppsView() {
             </div>
             <div className="pt-2">
               <Link to="/developer/demo">
-                <Button variant="voxauth" size="sm" className="gap-1.5 text-xs">
+                <Button variant="swarolipi" size="sm" className="gap-1.5 text-xs">
                   Authorize Demo dApp <ArrowRight className="size-3.5" />
                 </Button>
               </Link>

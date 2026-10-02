@@ -229,10 +229,10 @@ class WalletService {
         optionalChains: [137, 42161, 10, 8453],
         showQrModal: true,
         metadata: {
-          name: "VoxAuth",
+          name: "Swarolipi",
           description: "Privacy-conscious Human Verification for Web3",
-          url: typeof window !== "undefined" ? window.location.origin : "https://voxauth.app",
-          icons: ["https://voxauth.app/icon.png"],
+          url: typeof window !== "undefined" ? window.location.origin : "https://swarolipi.app",
+          icons: ["https://swarolipi.app/icon.png"],
         },
       });
 
@@ -299,8 +299,8 @@ class WalletService {
   private saveSession(provider: ProviderId, address: string) {
     if (typeof window === "undefined" || !address) return;
     try {
-      localStorage.setItem("voxauth_wallet_provider", provider);
-      localStorage.setItem("voxauth_wallet_address", address);
+      localStorage.setItem("swarolipi_wallet_provider", provider);
+      localStorage.setItem("swarolipi_wallet_address", address);
     } catch (e) {
       console.warn("Could not save wallet session:", e);
     }
@@ -309,8 +309,8 @@ class WalletService {
   private clearSession() {
     if (typeof window === "undefined") return;
     try {
-      localStorage.removeItem("voxauth_wallet_provider");
-      localStorage.removeItem("voxauth_wallet_address");
+      localStorage.removeItem("swarolipi_wallet_provider");
+      localStorage.removeItem("swarolipi_wallet_address");
     } catch (e) {
       console.warn("Could not clear wallet session:", e);
     }
@@ -318,8 +318,8 @@ class WalletService {
 
   private restoreSession() {
     try {
-      const savedProvider = localStorage.getItem("voxauth_wallet_provider") as ProviderId | null;
-      const savedAddress = localStorage.getItem("voxauth_wallet_address");
+      const savedProvider = localStorage.getItem("swarolipi_wallet_provider") as ProviderId | null;
+      const savedAddress = localStorage.getItem("swarolipi_wallet_address");
 
       if (savedProvider && savedAddress) {
         if (savedProvider === "metamask" && this.isProviderInstalled("metamask")) {

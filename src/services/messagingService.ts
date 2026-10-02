@@ -91,11 +91,11 @@ export function getInitialSeedMessages(userWallet: string): Message[] {
     },
     {
       messageId: "msg-seed-2",
-      threadId: "thread-voxauth-system",
+      threadId: "thread-swarolipi-system",
       senderType: "application",
       senderAddress: "0x0000...0000",
-      senderName: "VoxAuth Verification Service",
-      senderApplicationId: "voxauth-identity",
+      senderName: "Swarolipi Verification Service",
+      senderApplicationId: "swarolipi-identity",
       senderTrustLevel: "verified_app",
       recipientAddress: targetWallet,
       subject: "Identity verification completed",
@@ -106,7 +106,7 @@ export function getInitialSeedMessages(userWallet: string): Message[] {
       deleted: false,
       createdAt: now - 2 * HOUR,
       updatedAt: now - 2 * HOUR,
-      applicationId: "voxauth-identity",
+      applicationId: "swarolipi-identity",
       messageType: "verification_status",
       action: {
         label: "View Credentials",
@@ -123,8 +123,8 @@ export function getInitialSeedMessages(userWallet: string): Message[] {
       senderApplicationId: "marketplace-dapp",
       senderTrustLevel: "verified_app",
       recipientAddress: targetWallet,
-      subject: "Welcome to VoxAuth Protocol",
-      body: `Welcome to the VoxAuth decentralized identity network! Your wallet identity (${targetWallet}) is now connected. Explore active authorized applications and verification signals.`,
+      subject: "Welcome to Swarolipi Protocol",
+      body: `Welcome to the Swarolipi decentralized identity network! Your wallet identity (${targetWallet}) is now connected. Explore active authorized applications and verification signals.`,
       status: "inbox",
       read: true,
       starred: false,
@@ -143,7 +143,7 @@ export function getInitialSeedMessages(userWallet: string): Message[] {
       senderTrustLevel: "verified_wallet",
       recipientAddress: targetWallet,
       subject: "Hello from peer wallet",
-      body: "Hello! Confirming our peer identity verification exchange on VoxAuth. Let me know once you submit your vote on VoteDAO.",
+      body: "Hello! Confirming our peer identity verification exchange on Swarolipi. Let me know once you submit your vote on VoteDAO.",
       status: "inbox",
       read: true,
       starred: true,
@@ -178,7 +178,7 @@ export function getInitialSeedMessages(userWallet: string): Message[] {
       recipientAddress: "0x81A4...72BC",
       recipientName: "VoteDAO",
       subject: "Verification status confirmation",
-      body: "I have updated my voice human verification signal on VoxAuth. Please re-verify my wallet access badge.",
+      body: "I have updated my voice human verification signal on Swarolipi. Please re-verify my wallet access badge.",
       status: "sent",
       read: true,
       starred: false,
@@ -258,7 +258,7 @@ class MessagingService {
 
   private getStorageKey(walletAddress: string | null): string {
     const walletKey = (walletAddress || DEFAULT_CONNECTED_WALLET).toLowerCase();
-    return `voxauth_messages_${walletKey}`;
+    return `swarolipi_messages_${walletKey}`;
   }
 
   public getMessages(walletAddress: string | null): Message[] {

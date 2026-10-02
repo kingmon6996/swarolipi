@@ -44,7 +44,7 @@ class AuthService {
   public getAuthorizedApps(walletAddress: string | null): AuthorizedApp[] {
     if (!walletAddress || typeof window === "undefined") return [];
     try {
-      const key = `voxauth_authorized_apps_${walletAddress.toLowerCase()}`;
+      const key = `swarolipi_authorized_apps_${walletAddress.toLowerCase()}`;
       const saved = localStorage.getItem(key);
       if (saved) return JSON.parse(saved);
     } catch (e) {
@@ -79,7 +79,7 @@ class AuthService {
     }
 
     try {
-      const key = `voxauth_authorized_apps_${walletAddress.toLowerCase()}`;
+      const key = `swarolipi_authorized_apps_${walletAddress.toLowerCase()}`;
       localStorage.setItem(key, JSON.stringify(apps));
       this.notify();
     } catch (e) {
@@ -96,7 +96,7 @@ class AuthService {
     const filtered = apps.filter((a) => a.applicationId !== applicationId);
 
     try {
-      const key = `voxauth_authorized_apps_${walletAddress.toLowerCase()}`;
+      const key = `swarolipi_authorized_apps_${walletAddress.toLowerCase()}`;
       localStorage.setItem(key, JSON.stringify(filtered));
       this.notify();
     } catch (e) {

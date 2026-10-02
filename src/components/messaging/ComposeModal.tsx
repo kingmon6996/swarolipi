@@ -99,7 +99,7 @@ export function ComposeModal({ isOpen, onClose, initialDraft }: ComposeModalProp
   const handleSend = () => {
     if (!recipient.trim()) {
       toast.error("Recipient Required", {
-        description: "Please specify a wallet address or VoxAuth application ID.",
+        description: "Please specify a wallet address or Swarolipi application ID.",
       });
       return;
     }
@@ -181,7 +181,7 @@ export function ComposeModal({ isOpen, onClose, initialDraft }: ComposeModalProp
           }}
           exit={{ y: 80, opacity: 0, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 320, damping: 28 }}
-          className={`pointer-events-auto flex flex-col rounded-2xl border border-border bg-card shadow-voxauth overflow-hidden w-full max-w-full md:max-w-[560px] ${isMaximized ? "md:max-w-none" : ""
+          className={`pointer-events-auto flex flex-col rounded-2xl border border-border bg-card shadow-swarolipi overflow-hidden w-full max-w-full md:max-w-[560px] ${isMaximized ? "md:max-w-none" : ""
             }`}
         >
           {/* Compose Header Bar */}
@@ -346,7 +346,7 @@ export function ComposeModal({ isOpen, onClose, initialDraft }: ComposeModalProp
                 <div className="flex items-center gap-2">
                   <Button
                     onClick={handleSend}
-                    variant="voxauth"
+                    variant="swarolipi"
                     size="sm"
                     className="gap-2 text-xs font-bold px-4"
                   >

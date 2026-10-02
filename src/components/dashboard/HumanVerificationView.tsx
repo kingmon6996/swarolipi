@@ -210,7 +210,7 @@ export function HumanVerificationView() {
             </div>
 
             {/* Begin Verification CTA Card */}
-            <div className="rounded-2xl border-2 border-primary/20 bg-card p-8 text-center shadow-voxauth sm:p-10">
+            <div className="rounded-2xl border-2 border-primary/20 bg-card p-8 text-center shadow-swarolipi sm:p-10">
               <div className="mx-auto grid size-16 place-items-center rounded-2xl border border-primary/30 bg-accent text-primary shadow-sm">
                 <Volume2 className="size-8" />
               </div>
@@ -222,7 +222,7 @@ export function HumanVerificationView() {
               </p>
 
               <div className="mt-8 flex justify-center">
-                <Button size="lg" variant="voxauth" onClick={handleBegin} className="gap-2 px-8 py-6 text-base">
+                <Button size="lg" variant="swarolipi" onClick={handleBegin} className="gap-2 px-8 py-6 text-base">
                   Begin <ArrowRight className="size-5" />
                 </Button>
               </div>
@@ -257,10 +257,10 @@ export function HumanVerificationView() {
                   <div
                     key={i}
                     className={`grid size-7 place-items-center rounded-full text-xs font-bold transition-all ${completedChallenges[i]
-                        ? "bg-violet-600 text-white shadow-[0_0_8px_rgba(139,92,246,0.5)]"
-                        : i === currentIndex
-                          ? "bg-primary text-primary-foreground ring-2 ring-purple-500/40"
-                          : "bg-accent text-muted-foreground"
+                      ? "bg-violet-600 text-white shadow-[0_0_8px_rgba(139,92,246,0.5)]"
+                      : i === currentIndex
+                        ? "bg-primary text-primary-foreground ring-2 ring-purple-500/40"
+                        : "bg-accent text-muted-foreground"
                       }`}
                   >
                     {completedChallenges[i] ? <Check className="size-3.5" /> : i + 1}
@@ -298,10 +298,10 @@ export function HumanVerificationView() {
                     onClick={recState === "recording" ? stopRecording : startRecording}
                     disabled={recState === "recorded"}
                     className={`relative grid size-20 place-items-center rounded-full text-white shadow-lg transition-all transform active:scale-95 ${recState === "recording"
-                        ? "bg-destructive ring-4 ring-destructive/30"
-                        : recState === "recorded"
-                          ? "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 ring-4 ring-purple-500/30 shadow-[0_0_20px_rgba(139,92,246,0.6)]"
-                          : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-105 shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+                      ? "bg-destructive ring-4 ring-destructive/30"
+                      : recState === "recorded"
+                        ? "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 ring-4 ring-purple-500/30 shadow-[0_0_20px_rgba(139,92,246,0.6)]"
+                        : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-105 shadow-[0_0_20px_rgba(139,92,246,0.4)]"
                       }`}
                     aria-label={recState === "recording" ? "Stop recording" : "Start recording"}
                   >
@@ -364,10 +364,10 @@ export function HumanVerificationView() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     className={`flex items-center justify-between rounded-xl border p-3.5 text-xs font-bold transition-all ${isDone
-                        ? "border-purple-500/30 bg-purple-950/20 text-purple-200"
-                        : isCurrent
-                          ? "border-primary/40 bg-accent text-primary"
-                          : "border-border/60 bg-background/50 text-muted-foreground opacity-60"
+                      ? "border-purple-500/30 bg-purple-950/20 text-purple-200"
+                      : isCurrent
+                        ? "border-primary/40 bg-accent text-primary"
+                        : "border-border/60 bg-background/50 text-muted-foreground opacity-60"
                       }`}
                   >
                     <span className="flex items-center gap-3">
@@ -398,7 +398,7 @@ export function HumanVerificationView() {
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="rounded-2xl border-2 border-primary/20 bg-card p-8 text-center shadow-voxauth sm:p-12"
+            className="rounded-2xl border-2 border-primary/20 bg-card p-8 text-center shadow-swarolipi sm:p-12"
           >
             <div className="mx-auto grid size-16 place-items-center rounded-full border border-primary/30 bg-accent text-primary shadow-sm">
               <Loader2 className="size-8 animate-spin" />
@@ -422,10 +422,10 @@ export function HumanVerificationView() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     className={`flex items-center justify-between rounded-xl border p-3.5 text-xs font-bold transition-all ${isDone
-                        ? "border-fresh/30 bg-fresh/10 text-fresh"
-                        : isCurrent
-                          ? "border-primary/40 bg-accent text-primary"
-                          : "border-border/60 bg-background/50 text-muted-foreground opacity-60"
+                      ? "border-fresh/30 bg-fresh/10 text-fresh"
+                      : isCurrent
+                        ? "border-primary/40 bg-accent text-primary"
+                        : "border-border/60 bg-background/50 text-muted-foreground opacity-60"
                       }`}
                   >
                     <span className="flex items-center gap-3">
@@ -457,7 +457,7 @@ export function HumanVerificationView() {
             className="space-y-8"
           >
             {isSuccess ? (
-              <div className="rounded-2xl border-2 border-fresh/40 bg-card p-8 text-center shadow-voxauth sm:p-12">
+              <div className="rounded-2xl border-2 border-fresh/40 bg-card p-8 text-center shadow-swarolipi sm:p-12">
                 {/* Shield Icon Badge */}
                 <div className="relative mx-auto grid size-20 place-items-center rounded-3xl border border-fresh/40 bg-fresh/10 text-fresh shadow-md">
                   <ShieldCheck className="size-10" />
@@ -502,14 +502,14 @@ export function HumanVerificationView() {
 
                 <div className="mt-8 flex justify-center gap-4">
                   <Link to="/verify">
-                    <Button variant="voxauth" className="gap-2 px-8 py-6 text-base">
+                    <Button variant="swarolipi" className="gap-2 px-8 py-6 text-base">
                       Continue to Verification Center <ArrowRight className="size-5" />
                     </Button>
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border-2 border-destructive/30 bg-card p-8 text-center shadow-voxauth sm:p-12">
+              <div className="rounded-2xl border-2 border-destructive/30 bg-card p-8 text-center shadow-swarolipi sm:p-12">
                 <div className="mx-auto grid size-16 place-items-center rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive">
                   <AlertCircle className="size-8" />
                 </div>
@@ -521,11 +521,11 @@ export function HumanVerificationView() {
                 </p>
 
                 <div className="mt-8 flex justify-center gap-3">
-                  <Button variant="voxauthOutline" onClick={handleBegin}>
+                  <Button variant="swarolipiOutline" onClick={handleBegin}>
                     Try Again
                   </Button>
                   <Link to="/verify">
-                    <Button variant="voxauth">Return to Verification Center</Button>
+                    <Button variant="swarolipi">Return to Verification Center</Button>
                   </Link>
                 </div>
               </div>

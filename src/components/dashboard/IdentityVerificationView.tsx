@@ -289,7 +289,7 @@ export function IdentityVerificationView() {
                     Accepted government documents for {selectedCountry.name}.
                   </p>
                 </div>
-                <Button variant="voxauthOutline" size="sm" onClick={() => setStep("select_country")}>
+                <Button variant="swarolipiOutline" size="sm" onClick={() => setStep("select_country")}>
                   Change Country
                 </Button>
               </div>
@@ -341,7 +341,7 @@ export function IdentityVerificationView() {
                     Upload a high-quality scan or photo of your {selectedDocument.name} (JPG, PNG, PDF max 10MB).
                   </p>
                 </div>
-                <Button variant="voxauthOutline" size="sm" onClick={() => setStep("select_document")}>
+                <Button variant="swarolipiOutline" size="sm" onClick={() => setStep("select_document")}>
                   Back
                 </Button>
               </div>
@@ -417,7 +417,7 @@ export function IdentityVerificationView() {
                 <div>
                   <p className="font-bold text-foreground">Privacy Notice</p>
                   <p className="mt-0.5 leading-relaxed">
-                    Your document is used only for identity verification. VoxAuth does not expose your government ID information to third-party applications through the authorization layer.
+                    Your document is used only for identity verification. Swarolipi does not expose your government ID information to third-party applications through the authorization layer.
                   </p>
                 </div>
               </div>
@@ -425,7 +425,7 @@ export function IdentityVerificationView() {
               {/* Submit CTA */}
               <div className="mt-8 flex justify-end">
                 <Button
-                  variant="voxauth"
+                  variant="swarolipi"
                   disabled={!frontFile || (selectedDocument.requiresBack && !backFile)}
                   onClick={handleSubmitUpload}
                   className="gap-2 px-8 py-6 text-base"
@@ -538,7 +538,7 @@ export function IdentityVerificationView() {
 
             <div className="mt-8 flex justify-center gap-4">
               <Link to="/verify">
-                <Button variant="voxauth" className="gap-2 px-8 py-6 text-base">
+                <Button variant="swarolipi" className="gap-2 px-8 py-6 text-base">
                   Continue to Verification Center <ArrowRight className="size-5" />
                 </Button>
               </Link>

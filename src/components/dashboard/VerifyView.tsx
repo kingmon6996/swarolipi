@@ -26,7 +26,7 @@ export function VerifyView() {
             Verify Your Humanity
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Your wallet is connected. Complete VoxAuth human verification to create your privacy-conscious verification credential.
+            Your wallet is connected. Complete Swarolipi human verification to create your privacy-conscious verification credential.
           </p>
         </div>
       </motion.div>
@@ -86,7 +86,7 @@ export function VerifyView() {
               ○
             </span>
           </div>
-          <h3 className="mt-6 text-lg font-bold text-foreground">VoxAuth Credential</h3>
+          <h3 className="mt-6 text-lg font-bold text-foreground">Swarolipi Credential</h3>
           <p className="mt-1 text-xs text-muted-foreground">Reusable authorization token</p>
           <div className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 text-xs font-bold text-muted-foreground">
             ○ Not Available
@@ -114,7 +114,7 @@ export function VerifyView() {
         <div className="mt-8 flex justify-center">
           <Button
             size="lg"
-            variant="voxauth"
+            variant="swarolipi"
             onClick={() => setModalOpen(true)}
             className="gap-2 text-base px-8 py-6"
           >
@@ -168,12 +168,12 @@ export function VerifyView() {
                   <li>Nonce Generation & Message Signing</li>
                   <li>Voice Challenge & Audio Sample Recording</li>
                   <li>Zero-Knowledge Human Signal Generation</li>
-                  <li>VoxAuth Verifiable Credential Issuance</li>
+                  <li>Swarolipi Verifiable Credential Issuance</li>
                 </ul>
               </div>
 
               <div className="mt-6 flex justify-end">
-                <Button variant="voxauth" onClick={() => setModalOpen(false)}>
+                <Button variant="swarolipi" onClick={() => setModalOpen(false)}>
                   Got It
                 </Button>
               </div>

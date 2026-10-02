@@ -64,7 +64,7 @@ class ProfileService {
   public loadOrCreateProfile(walletAddress: string): UserProfile {
     const address = (walletAddress || "").toLowerCase();
     this.activeAddress = address;
-    const storageKey = `voxauth_profile_${address}`;
+    const storageKey = `swarolipi_profile_${address}`;
 
     try {
       const saved = localStorage.getItem(storageKey);
@@ -186,7 +186,7 @@ class ProfileService {
   private saveProfile(profile: UserProfile) {
     if (typeof window === "undefined" || !profile.walletAddress) return;
     try {
-      const key = `voxauth_profile_${profile.walletAddress.toLowerCase()}`;
+      const key = `swarolipi_profile_${profile.walletAddress.toLowerCase()}`;
       localStorage.setItem(key, JSON.stringify(profile));
     } catch (e) {
       console.warn("Could not save profile:", e);

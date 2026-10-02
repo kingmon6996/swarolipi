@@ -57,9 +57,9 @@ export function MailboxSidebar({
       identityRequests: ["Wallet Ownership"],
     },
     {
-      applicationId: "voxauth-identity",
-      name: "VoxAuth Service",
-      domain: "voxauth.io",
+      applicationId: "swarolipi-identity",
+      name: "Swarolipi Service",
+      domain: "swarolipi.io",
       identityRequests: ["Human Verification", "ID Verification"],
     },
   ];
@@ -91,7 +91,7 @@ export function MailboxSidebar({
       {/* Primary Compose Button */}
       <Button
         onClick={onOpenCompose}
-        variant="voxauth"
+        variant="swarolipi"
         className="w-full justify-center gap-2 font-display text-sm font-bold shadow-md hover:shadow-lg py-5 rounded-xl transition-all"
       >
         <Plus className="size-5" /> Compose
@@ -157,7 +157,7 @@ export function MailboxSidebar({
 
         <div className="space-y-2 pt-1">
           {knownApps.map((app) => {
-            const isAppAuth = isAuthorized(app.applicationId) || app.applicationId === "voxauth-identity";
+            const isAppAuth = isAuthorized(app.applicationId) || app.applicationId === "swarolipi-identity";
             const isSelected = selectedAppId === app.applicationId;
             const lastMsg = getLastAppMessage(app.applicationId);
 

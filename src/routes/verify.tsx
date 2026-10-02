@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/verify")({
   head: () => ({
     meta: [
-      { title: "Verification Center | VoxAuth Trust Layers" },
-      { name: "description", content: "Overview of your VoxAuth human verification and document identity verification layers." },
+      { title: "Verification Center | Swarolipi Trust Layers" },
+      { name: "description", content: "Overview of your Swarolipi human verification and document identity verification layers." },
     ],
   }),
   component: VerifyPage,
@@ -21,12 +21,12 @@ function VerifyPage() {
   if (!isConnected) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center">
-        <div className="max-w-md rounded-2xl border border-border bg-card p-8 shadow-voxauth">
+        <div className="max-w-md rounded-2xl border border-border bg-card p-8 shadow-swarolipi">
           <h2 className="font-display text-2xl font-extrabold text-foreground">Wallet Required</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Please connect your Web3 wallet to access the VoxAuth Verification Center.
+            Please connect your Web3 wallet to access the Swarolipi Verification Center.
           </p>
-          <Button variant="voxauth" className="mt-6 w-full" onClick={() => navigate({ to: "/" })}>
+          <Button variant="swarolipi" className="mt-6 w-full" onClick={() => navigate({ to: "/" })}>
             Return to Home & Connect
           </Button>
         </div>

@@ -4,7 +4,7 @@ import { AuthorizeView } from "@/components/auth/AuthorizeView";
 export const Route = createFileRoute("/authorize")({
   head: () => ({
     meta: [
-      { title: "Authorize Application | VoxAuth Identity Layer" },
+      { title: "Authorize Application | Swarolipi Identity Layer" },
       { name: "description", content: "Review and grant identity permissions requested by third-party applications." },
     ],
   }),

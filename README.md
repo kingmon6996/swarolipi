@@ -1,10 +1,10 @@
-# VoxAuth — Technical & Functional Documentation (`doc.md`)
+# Swarolipi — Technical & Functional Documentation (`doc.md`)
 
 ## Overview
 
-**VoxAuth** is a privacy-first digital identity and human verification platform built for Web3 and Ethereum/EVM applications.
+**Swarolipi** is a privacy-first digital identity and human verification platform built for Web3 and Ethereum/EVM applications.
 
-In decentralized applications, a crypto wallet address proves ownership of digital assets, but it cannot prove whether the owner is a real human or an automated bot. VoxAuth solves this by adding a privacy-conscious "human layer" to Web3 wallets. 
+In decentralized applications, a crypto wallet address proves ownership of digital assets, but it cannot prove whether the owner is a real human or an automated bot. Swarolipi solves this by adding a privacy-conscious "human layer" to Web3 wallets. 
 
 > **Core Philosophy**: **"Verify Once via Voice, Authorize Anywhere Forever."**
 
@@ -20,7 +20,7 @@ Web3 wallet addresses prove digital asset ownership but cannot verify human iden
 
 ## Proposed Solution
 
-VoxAuth establishes a privacy-first human layer for Web3 based on **"Verify Once via Voice, Authorize Anywhere Forever"**:
+Swarolipi establishes a privacy-first human layer for Web3 based on **"Verify Once via Voice, Authorize Anywhere Forever"**:
 
 1. **One-Time Voice Verification**: ElevenLabs AI verifies human liveness once to issue a permanent wallet-bound credential, blocking bots.
 2. **Zero-Knowledge Identity Hashing**: Python Flask engine generates deterministic identity hashes with zero raw PII storage.
@@ -90,9 +90,9 @@ Functions as a decentralized permission gateway (similar to OAuth for Web3) for 
   - **Identity Badge**: Confirm identity status.
 * **Time-Bounded & Scope-Expiring Authorizations**:
   - Users can set self-expiring permission windows (e.g. *"Authorize for 24 hours"* or *"Authorize for 1 single vote"*).
-  - Once the time window or transaction count expires, the VoxAuth gateway automatically revokes access.
+  - Once the time window or transaction count expires, the Swarolipi gateway automatically revokes access.
 * **Identity Hash Sharing & Alternative SSO**:
-  - When a user grants permission to an authorized 3rd party dApp, VoxAuth securely passes the anonymized **identity hash** to the requesting application.
+  - When a user grants permission to an authorized 3rd party dApp, Swarolipi securely passes the anonymized **identity hash** to the requesting application.
   - If the 3rd party dApp finds a matching identity hash in its existing database, it serves as an **alternative single sign-on (SSO) / account recognition** method for the dApp without exposing raw personal data.
 
 ### 5. Privacy-Safe Trust & Reputation Score (API Protocol)
@@ -100,7 +100,7 @@ Functions as a decentralized permission gateway (similar to OAuth for Web3) for 
   - **Voice Verification**: +40 pts
   - **Identity Hash Credential**: +40 pts
   - **Wallet On-Chain Account Age**: +20 pts
-- **API Integration**: Third-party dApps query VoxAuth via simple REST/GraphQL endpoints (`GET /api/v1/verify/:walletAddress`) to check if a wallet meets their minimum required Trust Score threshold (e.g. Trust Score $\ge$ 75 required for governance voting).
+- **API Integration**: Third-party dApps query Swarolipi via simple REST/GraphQL endpoints (`GET /api/v1/verify/:walletAddress`) to check if a wallet meets their minimum required Trust Score threshold (e.g. Trust Score $\ge$ 75 required for governance voting).
 
 ### 6. Verified Web3 Mailbox & Messaging
 - A built-in decentralized messaging system for communication between wallets and authorized applications.
@@ -114,7 +114,7 @@ Functions as a decentralized permission gateway (similar to OAuth for Web3) for 
 - Located at `/developer/demo`, the sandbox allows external dApp builders to test authorization requests, query verification signals, and simulate callbacks.
 - **ElevenLabs AI Voice Assistant for Solidity Developers**:
   - Developers can converse live with an **ElevenLabs Conversational AI Agent** directly inside the portal.
-  - Developers ask questions via voice (e.g., *"How do I import VoxAuth.sol into my Remix / Hardhat Solidity project?"* or *"Generate a Solidity modifier for verifying human status on Ethereum Sepolia Testnet"*).
+  - Developers ask questions via voice (e.g., *"How do I import Swarolipi.sol into my Remix / Hardhat Solidity project?"* or *"Generate a Solidity modifier for verifying human status on Ethereum Sepolia Testnet"*).
   - The ElevenLabs voice agent responds verbally in real time while generating and rendering the exact Solidity smart contract code snippets and ABI on screen.
 
 ---
@@ -138,7 +138,7 @@ Functions as a decentralized permission gateway (similar to OAuth for Web3) for 
               │
               ▼
 ┌───────────────────────────┐  dApps request permissions with time-bounded expiration;
-│   4. Authorize dApps      │  VoxAuth shares anonymized identity hash for alternative 3rd party SSO
+│   4. Authorize dApps      │  Swarolipi shares anonymized identity hash for alternative 3rd party SSO
 └─────────────┬─────────────┘
               │
               ▼

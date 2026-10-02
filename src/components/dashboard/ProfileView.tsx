@@ -54,7 +54,7 @@ export function ProfileView() {
   const handleRevoke = (appId: string, appName: string) => {
     revokeApp(appId);
     toast.success("Authorization Revoked", {
-      description: `${appName} can no longer access your VoxAuth identity signals.`,
+      description: `${appName} can no longer access your Swarolipi identity signals.`,
     });
   };
 
@@ -131,7 +131,7 @@ export function ProfileView() {
               </span>
               <div className="flex-1 pr-6">
                 <h3 className="font-display text-base font-extrabold text-foreground sm:text-lg">
-                  Welcome to VoxAuth
+                  Welcome to Swarolipi
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
                   We've created your initial wallet-bound identity alias (<span className="font-bold text-foreground">{profileName}</span>). You can customize your name and avatar anytime.
@@ -154,7 +154,7 @@ export function ProfileView() {
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="relative w-full overflow-hidden rounded-2xl border-2 border-border bg-card p-6 text-center shadow-voxauth sm:p-8"
+        className="relative w-full overflow-hidden rounded-2xl border-2 border-border bg-card p-6 text-center shadow-swarolipi sm:p-8"
       >
         <div className="mesh-background absolute inset-0 opacity-30 pointer-events-none" />
 
@@ -273,7 +273,7 @@ export function ProfileView() {
               <label htmlFor="avatar-upload">
                 <Button
                   type="button"
-                  variant="voxauthOutline"
+                  variant="swarolipiOutline"
                   size="sm"
                   className="gap-2 text-xs"
                   onClick={() => fileInputRef.current?.click()}
@@ -315,7 +315,7 @@ export function ProfileView() {
           </div>
 
           <div className="flex justify-end pt-2">
-            <Button type="submit" variant="voxauth" className="px-6 gap-2">
+            <Button type="submit" variant="swarolipi" className="px-6 gap-2">
               <Check className="size-4" /> Save Changes
             </Button>
           </div>

@@ -94,14 +94,14 @@ export function AuthorizeView({ request = DEMO_VOTEDAO_APP }: { request?: AuthRe
       icon: User,
       fullDetail: "Allows VoteDAO to personalize your account and display your verified display name across governance proposals.",
       dataScope: "Display Name string",
-      privacyNote: "You can update your display name anytime in your VoxAuth profile settings.",
+      privacyNote: "You can update your display name anytime in your Swarolipi profile settings.",
     },
     {
       id: "avatar",
       shortLabel: "Profile image",
       shortValue: profileImage ? "Avatar set" : "Default avatar",
       icon: ImageIcon,
-      fullDetail: "Allows VoteDAO to render your VoxAuth avatar image on public delegate cards and voting leaderboards.",
+      fullDetail: "Allows VoteDAO to render your Swarolipi avatar image on public delegate cards and voting leaderboards.",
       dataScope: "Public avatar image URL",
       privacyNote: "Only the image URL is shared. No raw image files or device metadata are stored.",
     },
@@ -162,7 +162,7 @@ export function AuthorizeView({ request = DEMO_VOTEDAO_APP }: { request?: AuthRe
                   <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground shadow-sm">
                     <ShieldCheck className="size-4" />
                   </span>
-                  VOXAUTH
+                  Swarolipi
                 </Link>
 
                 <span className="font-mono text-xs font-semibold text-muted-foreground">
@@ -193,7 +193,7 @@ export function AuthorizeView({ request = DEMO_VOTEDAO_APP }: { request?: AuthRe
               {/* Title & Description */}
               <div>
                 <h1 className="font-display text-xl sm:text-2xl font-extrabold text-foreground tracking-tight leading-snug">
-                  {request.name} wants to access your VoxAuth identity
+                  {request.name} wants to access your Swarolipi identity
                 </h1>
                 <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
                   Review the information requested by this application before continuing.
@@ -267,14 +267,14 @@ export function AuthorizeView({ request = DEMO_VOTEDAO_APP }: { request?: AuthRe
               <div className="space-y-3 pt-2">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button
-                    variant="voxauthOutline"
+                    variant="swarolipiOutline"
                     onClick={handleDeny}
                     className="sm:flex-1 py-5 text-xs"
                   >
                     Cancel
                   </Button>
                   <Button
-                    variant="voxauth"
+                    variant="swarolipi"
                     onClick={handleAllow}
                     className="sm:flex-1 py-5 text-xs gap-2"
                   >
@@ -366,7 +366,7 @@ export function AuthorizeView({ request = DEMO_VOTEDAO_APP }: { request?: AuthRe
                   Access Granted
                 </h2>
                 <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
-                  <strong className="text-foreground">{request.name}</strong> is now authorized to access your VoxAuth identity signals.
+                  <strong className="text-foreground">{request.name}</strong> is now authorized to access your Swarolipi identity signals.
                 </p>
               </div>
 
@@ -385,7 +385,7 @@ export function AuthorizeView({ request = DEMO_VOTEDAO_APP }: { request?: AuthRe
                 </div>
               </div>
 
-              <Button variant="voxauth" onClick={handleReturnToApp} className="w-full gap-2 py-6 text-base">
+              <Button variant="swarolipi" onClick={handleReturnToApp} className="w-full gap-2 py-6 text-base">
                 Return to {request.name} <ArrowRight className="size-5" />
               </Button>
             </motion.div>
@@ -413,10 +413,10 @@ export function AuthorizeView({ request = DEMO_VOTEDAO_APP }: { request?: AuthRe
               </div>
 
               <div className="flex flex-col gap-3">
-                <Button variant="voxauth" onClick={handleReturnToApp} className="py-6 text-sm">
+                <Button variant="swarolipi" onClick={handleReturnToApp} className="py-6 text-sm">
                   Return to {request.name}
                 </Button>
-                <Button variant="voxauthOutline" onClick={handleReturnToDashboard} className="py-6 text-sm">
+                <Button variant="swarolipiOutline" onClick={handleReturnToDashboard} className="py-6 text-sm">
                   Return to Dashboard
                 </Button>
               </div>
@@ -433,7 +433,7 @@ export function AuthorizeView({ request = DEMO_VOTEDAO_APP }: { request?: AuthRe
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-voxauth space-y-5"
+              className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-swarolipi space-y-5"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -477,7 +477,7 @@ export function AuthorizeView({ request = DEMO_VOTEDAO_APP }: { request?: AuthRe
               </div>
 
               <Button
-                variant="voxauth"
+                variant="swarolipi"
                 onClick={() => setSelectedDetail(null)}
                 className="w-full py-5 text-xs font-bold"
               >

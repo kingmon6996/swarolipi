@@ -242,7 +242,7 @@ export function InboxView({ initialFolder = "inbox", initialAppId = null }: Inbo
               setEditingDraft(null);
               setIsComposeOpen(true);
             }}
-            variant="voxauth"
+            variant="swarolipi"
             size="lg"
             className="w-full sm:w-auto gap-2 font-display text-sm font-bold shadow-md hover:shadow-lg px-6 py-2.5 rounded-xl transition-all"
           >
@@ -271,7 +271,7 @@ export function InboxView({ initialFolder = "inbox", initialAppId = null }: Inbo
           {/* Threading Toggle */}
           <Button
             onClick={() => setIsThreaded(!isThreaded)}
-            variant={isThreaded ? "voxauth" : "outline"}
+            variant={isThreaded ? "swarolipi" : "outline"}
             size="sm"
             className="gap-1.5 text-xs font-semibold whitespace-nowrap w-full sm:w-auto"
           >
@@ -291,8 +291,8 @@ export function InboxView({ initialFolder = "inbox", initialAppId = null }: Inbo
                 key={f}
                 onClick={() => setActiveFilter(f)}
                 className={`rounded-full px-3 py-1 text-xs font-bold transition-colors capitalize ${activeFilter === f
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-accent/50 text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
               >
                 {f}
@@ -485,7 +485,7 @@ export function InboxView({ initialFolder = "inbox", initialAppId = null }: Inbo
                   {currentFolder === "inbox" && (
                     <Button
                       onClick={() => setIsComposeOpen(true)}
-                      variant="voxauth"
+                      variant="swarolipi"
                       size="sm"
                       className="gap-1.5 text-xs font-bold mt-2"
                     >
@@ -511,8 +511,8 @@ export function InboxView({ initialFolder = "inbox", initialAppId = null }: Inbo
                         key={msg.messageId}
                         onClick={() => handleMessageClick(msg)}
                         className={`group flex items-center justify-between gap-3 p-4 cursor-pointer transition-all duration-150 ${isUnread
-                            ? "bg-accent/25 hover:bg-accent/60"
-                            : "bg-card hover:bg-accent/40"
+                          ? "bg-accent/25 hover:bg-accent/60"
+                          : "bg-card hover:bg-accent/40"
                           } ${isChecked ? "bg-primary/5" : ""}`}
                       >
                         {/* Left Controls & Sender Info */}
@@ -539,8 +539,8 @@ export function InboxView({ initialFolder = "inbox", initialAppId = null }: Inbo
                           >
                             <Star
                               className={`size-4 transition-transform group-hover:scale-110 ${msg.starred
-                                  ? "fill-amber-400 text-amber-400"
-                                  : "text-muted-foreground/60"
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-muted-foreground/60"
                                 }`}
                             />
                           </button>

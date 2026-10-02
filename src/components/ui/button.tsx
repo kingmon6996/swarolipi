@@ -10,11 +10,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white shadow-voxauth hover:from-indigo-500 hover:to-purple-500 hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] border border-white/10 active:scale-[0.98]",
-        voxauth:
-          "relative overflow-hidden bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white font-semibold shadow-voxauth hover:-translate-y-0.5 hover:from-indigo-500 hover:to-purple-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.6)] border border-white/15 active:translate-y-0",
-        voxauthOutline:
-          "border border-purple-500/25 bg-background/60 text-foreground shadow-sm backdrop-blur-md hover:-translate-y-0.5 hover:border-purple-400/50 hover:bg-purple-950/20 hover:text-white hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] active:translate-y-0",
+          "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white shadow-swarolipi hover:from-indigo-500 hover:to-purple-500 hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] border border-white/10 active:scale-[0.98]",
+        swarolipi:
+          "relative overflow-hidden bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white font-semibold shadow-swarolipi hover:-translate-y-0.5 hover:from-indigo-500 hover:to-purple-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.6)] border border-white/15 active:translate-y-0",
+        swarolipiOutline:
+          "relative overflow-hidden border border-white/20 bg-gradient-to-b from-white/15 via-white/5 to-white/10 backdrop-blur-2xl text-white font-semibold shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.35),0_8px_32px_0_rgba(0,0,0,0.4),0_0_20px_rgba(139,92,246,0.25)] hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/20 hover:text-white hover:shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.5),0_0_30px_rgba(168,85,247,0.45)] active:translate-y-0 active:bg-white/10 transition-all duration-300",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]",
         outline:

@@ -77,22 +77,11 @@ export function DashboardLayout({ activeTab, activeFolder = "inbox", children }:
         {/* Sidebar Header */}
         <div className="flex h-20 items-center justify-between px-5 border-b border-purple-500/15">
           <Link to="/" className="flex items-center gap-3 overflow-hidden">
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-600 to-violet-700 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)] border border-white/20">
-              <ShieldCheck className="size-5" />
-            </span>
-            <AnimatePresence mode="wait">
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="font-display text-lg font-extrabold tracking-[0.16em] whitespace-nowrap"
-                >
-                  VOXAUTH
-                </motion.span>
-              )}
-            </AnimatePresence>
+            {collapsed ? (
+              <img src="/icon.png" alt="Swarolipi" className="size-8 object-contain shrink-0" />
+            ) : (
+              <img src="/brand.png" alt="Swarolipi" className="h-[66px] w-auto object-contain" />
+            )}
           </Link>
 
           {/* Collapse Toggle Button */}

@@ -1,4 +1,7 @@
+import Dither from "./Dither";
 import { useEffect, useState, useRef } from "react";
+import Lenis from "lenis";
+import gsap from "gsap";
 import {
   motion,
   useReducedMotion,
@@ -31,7 +34,6 @@ import { useProfile } from "@/hooks/useProfile";
 import { formatAddress } from "@/components/WalletStatus";
 import { AnimatedText } from "@/components/animated-text";
 import { ScrollReveal, SectionReveal, ParallaxElement } from "@/components/scroll-reveal";
-import Dither from "@/components/Dither";
 
 const navItems = ["Product", "How It Works", "Security", "Developers"];
 
@@ -78,7 +80,7 @@ const cards = [
 const securityPoints = [
   {
     title: "No Custody",
-    body: "VoxAuth never holds or requests your funds, assets, or account management capabilities.",
+    body: "Swarolipi never holds or requests your funds, assets, or account management capabilities.",
     icon: Lock,
   },
   {
@@ -98,16 +100,71 @@ const securityPoints = [
   },
 ];
 
-export function VoxAuthLanding() {
+export function SwarolipiLanding() {
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const menuItemsRef = useRef<(HTMLElement | null)[]>([]);
 
   const { walletAddress, isConnected } = useWallet();
   const { profileName, profileImage } = useProfile();
   const navigate = useNavigate();
   const reduced = useReducedMotion();
+
+  // Lenis Smooth Scroll Setup
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      touchMultiplier: 2,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
+  // GSAP Sideways Drawer Animation
+  const openDrawer = () => {
+    setDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    if (!drawerRef.current || !overlayRef.current) {
+      setDrawerOpen(false);
+      return;
+    }
+    const tl = gsap.timeline({
+      onComplete: () => setDrawerOpen(false),
+    });
+    tl.to(drawerRef.current, { xPercent: 100, duration: 0.35, ease: "power3.in" })
+      .to(overlayRef.current, { opacity: 0, duration: 0.25, ease: "power2.in" }, "<");
+  };
+
+  useEffect(() => {
+    if (drawerOpen && drawerRef.current && overlayRef.current) {
+      const validItems = menuItemsRef.current.filter(Boolean);
+      const tl = gsap.timeline();
+      tl.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" })
+        .fromTo(drawerRef.current, { xPercent: 100 }, { xPercent: 0, duration: 0.45, ease: "power3.out" }, "<")
+        .fromTo(
+          validItems,
+          { opacity: 0, x: 40 },
+          { opacity: 1, x: 0, duration: 0.35, stagger: 0.08, ease: "power2.out" },
+          "-=0.2"
+        );
+    }
+  }, [drawerOpen]);
 
   // Parallax Hooks
   const { scrollYProgress } = useScroll();
@@ -131,20 +188,22 @@ export function VoxAuthLanding() {
   );
 
   const openWallet = () => {
-    setOpen(false);
+    closeDrawer();
     setWalletOpen(true);
   };
 
   const goToDashboard = () => {
+    closeDrawer();
     navigate({ to: "/dashboard" });
   };
 
   const goToDeveloperDemo = () => {
+    closeDrawer();
     navigate({ to: "/developer/demo" });
   };
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 80);
     const onMouseMove = (e: MouseEvent) => {
       if (!reduced) {
         setMousePos({
@@ -165,19 +224,18 @@ export function VoxAuthLanding() {
 
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* ================= HEADER ================= */}
+      {/* ================= TOP HEADER (Visible when at top) ================= */}
       <motion.header
-        className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-500 ${scrolled
-          ? "border-purple-500/20 bg-background/85 shadow-[0_4px_30px_rgba(0,0,0,0.6)] backdrop-blur-xl"
-          : "border-transparent bg-transparent"
-          }`}
+        animate={{
+          y: scrolled ? -100 : 0,
+          opacity: scrolled ? 0 : 1,
+        }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        className="fixed inset-x-0 top-0 z-40 border-b border-transparent bg-transparent transition-all duration-500"
       >
-        <nav className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 sm:px-8" aria-label="Main navigation">
-          <a href="#top" className="flex items-center gap-2.5 font-display text-lg font-extrabold tracking-[0.16em]" aria-label="VoxAuth home">
-            <span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-indigo-500 via-purple-600 to-violet-700 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)] border border-white/20">
-              <ShieldCheck className="size-4" />
-            </span>{" "}
-            VOXAUTH
+        <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-5 sm:px-8" aria-label="Main navigation">
+          <a href="#top" className="flex items-center gap-2" aria-label="Swarolipi home">
+            <img src="/brand.png" alt="Swarolipi" className="h-[120px] w-auto object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.4)]" />
           </a>
 
           <div className="hidden items-center gap-8 md:flex">
@@ -194,7 +252,7 @@ export function VoxAuthLanding() {
 
           <div className="hidden items-center gap-3 md:flex">
             {isConnected && walletAddress ? (
-              <Button variant="voxauth" size="sm" onClick={goToDashboard} className="gap-2 text-xs">
+              <Button variant="swarolipi" size="sm" onClick={goToDashboard} className="gap-2 text-xs">
                 {profileImage ? (
                   <img
                     src={profileImage}
@@ -210,81 +268,133 @@ export function VoxAuthLanding() {
                 <ArrowRight className="size-3.5" />
               </Button>
             ) : (
-              <Button variant="voxauth" className="hidden md:inline-flex" onClick={openWallet}>
+              <Button variant="swarolipi" className="hidden md:inline-flex" onClick={openWallet}>
                 Connect Wallet <ArrowRight />
               </Button>
             )}
           </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setOpen(!open)}
-            aria-label={open ? "Close menu" : "Open menu"}
-          >
-            {open ? <X /> : <Menu />}
-          </Button>
         </nav>
-
-        {/* Mobile Nav Drawer */}
-        <motion.div
-          initial={false}
-          animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
-          className="overflow-hidden border-t border-purple-500/20 bg-background/95 backdrop-blur-xl md:hidden"
-        >
-          <div className="space-y-1 px-5 py-5">
-            {navItems.map((item) => (
-              <a
-                key={item}
-                onClick={() => setOpen(false)}
-                href={`#${item.toLowerCase().replaceAll(" ", "-")}`}
-                className="block rounded-md px-3 py-3 text-sm font-semibold hover:bg-accent"
-              >
-                {item}
-              </a>
-            ))}
-            {isConnected && walletAddress ? (
-              <Button variant="voxauth" className="mt-3 w-full gap-2 text-xs" onClick={goToDashboard}>
-                {profileImage ? (
-                  <img
-                    src={profileImage}
-                    alt={profileName || "Profile"}
-                    className="size-5 rounded-full object-cover border border-primary-foreground/30"
-                  />
-                ) : (
-                  <span className="grid size-5 place-items-center rounded-full bg-primary-foreground/20 text-[0.65rem] font-extrabold text-primary-foreground border border-primary-foreground/30">
-                    {profileName ? profileName.charAt(0).toUpperCase() : "V"}
-                  </span>
-                )}
-                <span>Dashboard</span>
-                <ArrowRight className="size-4" />
-              </Button>
-            ) : (
-              <Button variant="voxauth" className="mt-3 w-full" onClick={openWallet}>
-                Connect Wallet
-              </Button>
-            )}
-          </div>
-        </motion.div>
       </motion.header>
 
-      {/* ================= HERO SECTION WITH SCROLL PARALLAX ================= */}
-      <section id="top" className="relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden px-5 pb-24 pt-36 text-center sm:px-8">
+      {/* ================= CIRCULAR BLACK HAMBURGER BUTTON (Visible when scrolled) ================= */}
+      <motion.button
+        initial={false}
+        animate={{
+          scale: scrolled ? 1 : 0,
+          opacity: scrolled ? 1 : 0,
+        }}
+        transition={{ type: "spring", stiffness: 350, damping: 25 }}
+        onClick={openDrawer}
+        className={`fixed top-6 right-[39px] z-50 flex size-14 items-center justify-center rounded-full bg-black/90 border border-purple-500/40 shadow-[0_0_30px_rgba(139,92,246,0.6)] backdrop-blur-2xl transition-all hover:scale-110 active:scale-95 cursor-pointer group ${scrolled ? "pointer-events-auto" : "pointer-events-none"}`}
+        aria-label="Open menu drawer"
+      >
+        <img
+          src="/icon.png"
+          alt="Swarolipi Icon"
+          className="size-8 object-contain transition-transform duration-300 group-hover:rotate-12"
+        />
+        <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 border border-white/20 text-white shadow-sm">
+          <Menu className="size-3" />
+        </span>
+      </motion.button>
+
+      {/* ================= GSAP SIDEWAYS MENU DRAWER ================= */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          {/* Backdrop Overlay */}
+          <div
+            ref={overlayRef}
+            onClick={closeDrawer}
+            className="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity cursor-pointer"
+          />
+
+          {/* Sideways Drawer Panel */}
+          <div
+            ref={drawerRef}
+            className="relative z-10 flex h-full w-full max-w-md flex-col justify-between border-l border-purple-500/20 bg-background/95 p-8 shadow-[0_0_50px_rgba(0,0,0,0.9)] backdrop-blur-2xl"
+          >
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between border-b border-purple-500/15 pb-6">
+              <a href="#top" onClick={closeDrawer} className="flex items-center gap-2">
+                <img src="/brand.png" alt="Swarolipi" className="h-10 w-auto object-contain" />
+              </a>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={closeDrawer}
+                className="rounded-full border border-purple-500/20 text-muted-foreground hover:bg-purple-950/40 hover:text-foreground"
+                aria-label="Close menu"
+              >
+                <X className="size-5" />
+              </Button>
+            </div>
+
+            {/* Nav Links Staggered */}
+            <div className="my-auto space-y-6 py-8">
+              <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.2em] text-primary">
+                Navigation
+              </p>
+              {navItems.map((item, idx) => (
+                <a
+                  key={item}
+                  ref={(el) => { menuItemsRef.current[idx] = el; }}
+                  href={`#${item.toLowerCase().replaceAll(" ", "-")}`}
+                  onClick={closeDrawer}
+                  className="group flex items-center justify-between rounded-xl border border-transparent px-4 py-3 text-2xl font-extrabold text-foreground transition-all hover:border-purple-500/30 hover:bg-purple-950/30 hover:text-purple-300"
+                >
+                  <span>{item}</span>
+                  <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-300" />
+                </a>
+              ))}
+            </div>
+
+            {/* Footer Action inside Drawer */}
+            <div
+              ref={(el) => { menuItemsRef.current[navItems.length] = el; }}
+              className="border-t border-purple-500/15 pt-6 space-y-3"
+            >
+              {isConnected && walletAddress ? (
+                <Button variant="swarolipi" className="w-full gap-2 text-sm py-6" onClick={goToDashboard}>
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt={profileName || "Profile"}
+                      className="size-6 rounded-full object-cover border border-primary-foreground/30"
+                    />
+                  ) : (
+                    <span className="grid size-6 place-items-center rounded-full bg-primary-foreground/20 text-xs font-extrabold text-primary-foreground border border-primary-foreground/30">
+                      {profileName ? profileName.charAt(0).toUpperCase() : "V"}
+                    </span>
+                  )}
+                  <span>Go to Dashboard</span>
+                  <ArrowRight className="size-4" />
+                </Button>
+              ) : (
+                <Button variant="swarolipi" className="w-full gap-2 text-sm py-6" onClick={openWallet}>
+                  Connect Wallet <ArrowRight className="size-4" />
+                </Button>
+              )}
+              <p className="text-center text-[0.7rem] font-medium text-muted-foreground">
+                No custody · No seed phrases · No private keys
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= HERO SECTION WITH DITHER BACKGROUND ================= */}
+      <section id="top" className="hero relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden px-5 pb-24 pt-36 text-center sm:px-8">
         {/* ── LAYER 0: Dither WebGL animated background ── */}
-        <div
-          className="absolute inset-0 z-0"
-          style={{ width: "100%", height: "100%" }}
-        >
+        <div className="hero-background absolute inset-0 z-0 w-full h-full pointer-events-none">
           <Dither
             waveColor={[0.6588235294117647, 0.3333333333333333, 0.9686274509803922]}
             disableAnimation={false}
             enableMouseInteraction
             mouseRadius={0.3}
             colorNum={4}
-            waveAmplitude={0.3}
+            waveAmplitude={0.26}
             waveFrequency={3}
-            waveSpeed={0.05}
+            waveSpeed={0.06}
             backgroundColor={[0, 0, 0]}
           />
         </div>
@@ -293,17 +403,7 @@ export function VoxAuthLanding() {
         <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/60 via-transparent to-black/30" />
 
         {/* ── LAYER 10: Hero content ── */}
-        <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center">
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 12, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.1, duration: 0.45 }}
-            className="mb-7 inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-950/40 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-purple-200 backdrop-blur-md shadow-[0_0_20px_-3px_rgba(139,92,246,0.3)]"
-          >
-            <span className="size-2 rounded-full bg-violet-400 animate-pulse shadow-[0_0_8px_#a855f7]" /> Reusable Identity Infrastructure
-          </motion.div>
-
+        <div className="hero-content relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center">
           {/* Hero Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -333,7 +433,7 @@ export function VoxAuthLanding() {
           >
             {isConnected && walletAddress ? (
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button size="lg" variant="voxauth" onClick={goToDashboard} className="gap-2 shadow-md w-full sm:w-auto">
+                <Button size="lg" variant="swarolipi" onClick={goToDashboard} className="gap-2 shadow-md w-full sm:w-auto">
                   {profileImage ? (
                     <img
                       src={profileImage}
@@ -351,13 +451,13 @@ export function VoxAuthLanding() {
               </motion.div>
             ) : (
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button size="lg" variant="voxauth" onClick={openWallet} className="gap-2 shadow-md w-full sm:w-auto">
+                <Button size="lg" variant="swarolipi" onClick={openWallet} className="gap-2 shadow-md w-full sm:w-auto">
                   Connect Wallet <ArrowRight />
                 </Button>
               </motion.div>
             )}
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button size="lg" variant="voxauthOutline" onClick={goToDeveloperDemo} className="w-full sm:w-auto">
+              <Button size="lg" variant="swarolipiOutline" onClick={goToDeveloperDemo} className="w-full sm:w-auto">
                 Explore Developer Platform
               </Button>
             </motion.div>
@@ -383,7 +483,7 @@ export function VoxAuthLanding() {
       <SectionReveal id="product" className="px-5 py-24 sm:px-8 sm:py-32">
         <div className="mx-auto max-w-6xl text-center">
           <div className="mb-4">
-            <span className="text-xs font-bold uppercase tracking-[0.18em] text-primary">About VoxAuth</span>
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-primary">About Swarolipi</span>
           </div>
 
           <h2 className="mx-auto max-w-4xl font-display text-3xl font-extrabold leading-tight sm:text-6xl text-foreground">
@@ -393,7 +493,7 @@ export function VoxAuthLanding() {
               delay={0.1}
             />
             <AnimatedText
-              text="VoxAuth adds the human layer."
+              text="Swarolipi adds the human layer."
               mode="line"
               delay={0.25}
               className="bg-gradient-to-r from-indigo-300 via-purple-300 to-violet-400 bg-clip-text text-transparent mt-1"
@@ -459,7 +559,7 @@ export function VoxAuthLanding() {
 
           <ScrollReveal direction="up" delay={0.3} distance={20}>
             <p className="mx-auto mt-8 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
-              Wallet authentication tells applications who controls a digital identity. VoxAuth adds a human-verification layer that applications can use when authorization requires more than wallet ownership.
+              Wallet authentication tells applications who controls a digital identity. Swarolipi adds a human-verification layer that applications can use when authorization requires more than wallet ownership.
             </p>
           </ScrollReveal>
         </div>
@@ -474,7 +574,7 @@ export function VoxAuthLanding() {
               Built around trust, not custody.
             </h2>
             <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-              VoxAuth is designed with strict privacy boundaries separating wallet custody, human verification, and application authorization.
+              Swarolipi is designed with strict privacy boundaries separating wallet custody, human verification, and application authorization.
             </p>
           </div>
 
@@ -515,7 +615,7 @@ export function VoxAuthLanding() {
 
           <ScrollReveal direction="up" delay={0.25} distance={20}>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-              Connect your wallet and create your VoxAuth digital identity today.
+              Connect your wallet and create your Swarolipi digital identity today.
             </p>
           </ScrollReveal>
 
@@ -523,19 +623,19 @@ export function VoxAuthLanding() {
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               {isConnected ? (
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button size="lg" variant="voxauth" onClick={goToDashboard} className="gap-2 shadow-md w-full sm:w-auto">
+                  <Button size="lg" variant="swarolipi" onClick={goToDashboard} className="gap-2 shadow-md w-full sm:w-auto">
                     Go to Dashboard <ArrowRight />
                   </Button>
                 </motion.div>
               ) : (
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button size="lg" variant="voxauth" onClick={openWallet} className="gap-2 shadow-md w-full sm:w-auto">
+                  <Button size="lg" variant="swarolipi" onClick={openWallet} className="gap-2 shadow-md w-full sm:w-auto">
                     Connect Wallet <ArrowRight />
                   </Button>
                 </motion.div>
               )}
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button size="lg" variant="voxauthOutline" onClick={goToDeveloperDemo} className="w-full sm:w-auto">
+                <Button size="lg" variant="swarolipiOutline" onClick={goToDeveloperDemo} className="w-full sm:w-auto">
                   Explore Developer Platform
                 </Button>
               </motion.div>
@@ -549,7 +649,7 @@ export function VoxAuthLanding() {
         {/* Oversized Low Opacity Background Typography */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center opacity-[0.03] select-none text-purple-400">
           <span className="font-display text-[20vw] font-extrabold tracking-tighter leading-none">
-            VOXAUTH
+            Swarolipi
           </span>
         </div>
 
@@ -558,7 +658,7 @@ export function VoxAuthLanding() {
             <ScrollReveal direction="up" delay={0.05}>
               <div>
                 <span className="font-display text-lg font-extrabold tracking-[0.16em] text-foreground">
-                  VOXAUTH
+                  Swarolipi
                 </span>
                 <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
                   Private by design. Verifiable by nature. Reusable wallet identity infrastructure.
@@ -601,7 +701,7 @@ export function VoxAuthLanding() {
           </div>
 
           <div className="mt-8 flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left text-xs text-muted-foreground">
-            <span>© 2026 VoxAuth Identity Infrastructure. All rights reserved.</span>
+            <span>© 2026 Swarolipi Identity Infrastructure. All rights reserved.</span>
             <span className="font-semibold text-foreground">No custody · No seed phrases · No private keys</span>
           </div>
         </div>

@@ -73,13 +73,13 @@ export function DeveloperDemoView() {
             Third-Party Application Authorization
           </h1>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            Demonstrates how an external application (VoteDAO) requests and consumes authorized VoxAuth identity signals.
+            Demonstrates how an external application (VoteDAO) requests and consumes authorized Swarolipi identity signals.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Link to="/dashboard">
-            <Button variant="voxauthOutline" size="sm">
+            <Button variant="swarolipiOutline" size="sm">
               Return to Dashboard
             </Button>
           </Link>
@@ -91,7 +91,7 @@ export function DeveloperDemoView() {
         {/* Left Column (7 cols): VoteDAO Mock Application Interface */}
         <div className="lg:col-span-7 space-y-6">
           {/* VoteDAO Mock App Frame */}
-          <div className="overflow-hidden rounded-2xl border-2 border-border bg-card shadow-voxauth">
+          <div className="overflow-hidden rounded-2xl border-2 border-border bg-card shadow-swarolipi">
             {/* App Top Nav */}
             <div className="flex items-center justify-between border-b border-border/70 bg-accent/50 px-6 py-4">
               <div className="flex items-center gap-3">
@@ -140,12 +140,12 @@ export function DeveloperDemoView() {
                     Human Verification Required to Vote
                   </h4>
                   <p className="mt-1 text-xs text-muted-foreground max-w-md mx-auto">
-                    VoteDAO requires voters to prove wallet ownership and human verification through VoxAuth before submitting ballots.
+                    VoteDAO requires voters to prove wallet ownership and human verification through Swarolipi before submitting ballots.
                   </p>
 
                   <div className="mt-6 flex justify-center">
-                    <Button variant="voxauth" onClick={() => setModalOpen(true)} className="gap-2 px-6">
-                      Continue with VoxAuth <ArrowRight className="size-4" />
+                    <Button variant="swarolipi" onClick={() => setModalOpen(true)} className="gap-2 px-6">
+                      Continue with Swarolipi <ArrowRight className="size-4" />
                     </Button>
                   </div>
                 </motion.div>
@@ -209,13 +209,13 @@ export function DeveloperDemoView() {
                           Ballot Successfully Submitted!
                         </h5>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          You voted <strong className="text-foreground">{votedOption}</strong> on Proposal #42 using your authorized VoxAuth human identity.
+                          You voted <strong className="text-foreground">{votedOption}</strong> on Proposal #42 using your authorized Swarolipi human identity.
                         </p>
                       </div>
                     ) : (
                       <div className="grid gap-3 sm:grid-cols-3">
                         <Button
-                          variant="voxauthOutline"
+                          variant="swarolipiOutline"
                           onClick={() => handleCastVote("In Favor")}
                           className="h-auto py-3.5 flex-col items-center gap-1 hover:border-purple-500 hover:bg-purple-950/40"
                         >
@@ -223,7 +223,7 @@ export function DeveloperDemoView() {
                           <span className="text-[0.68rem] text-muted-foreground">In Favor of Proposal</span>
                         </Button>
                         <Button
-                          variant="voxauthOutline"
+                          variant="swarolipiOutline"
                           onClick={() => handleCastVote("Against")}
                           className="h-auto py-3.5 flex-col items-center gap-1 hover:border-destructive hover:bg-destructive/10"
                         >
@@ -231,7 +231,7 @@ export function DeveloperDemoView() {
                           <span className="text-[0.68rem] text-muted-foreground">Reject Proposal</span>
                         </Button>
                         <Button
-                          variant="voxauthOutline"
+                          variant="swarolipiOutline"
                           onClick={() => handleCastVote("Abstain")}
                           className="h-auto py-3.5 flex-col items-center gap-1 hover:border-purple-500/50"
                         >
@@ -265,7 +265,7 @@ export function DeveloperDemoView() {
             <div className="mt-6 space-y-2.5">
               {[
                 { label: "USER WALLET", desc: "User connects wallet identity", active: true },
-                { label: "VOXAUTH IDENTITY", desc: "Digital identity & human verification signals", active: true },
+                { label: "Swarolipi IDENTITY", desc: "Digital identity & human verification signals", active: true },
                 { label: "REQUESTED PERMISSIONS", desc: "VoteDAO requests Name, Wallet, Human Status", active: true },
                 { label: "USER APPROVAL", desc: "Explicit Allow / Deny confirmation", active: isVoteDAOAuthorized },
                 { label: "AUTHORIZED SIGNALS", desc: "Verifiable authorization token issued", active: isVoteDAOAuthorized },
@@ -305,7 +305,7 @@ export function DeveloperDemoView() {
         </div>
       </div>
 
-      {/* VoxAuth Handoff Modal */}
+      {/* Swarolipi Handoff Modal */}
       <AnimatePresence>
         {modalOpen && (
           <motion.div
@@ -354,10 +354,10 @@ export function DeveloperDemoView() {
               </div>
 
               <div className="mt-6 flex justify-end gap-3">
-                <Button variant="voxauthOutline" onClick={() => setModalOpen(false)}>
+                <Button variant="swarolipiOutline" onClick={() => setModalOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="voxauth" onClick={handleReviewAndAuthorize} className="gap-1.5">
+                <Button variant="swarolipi" onClick={handleReviewAndAuthorize} className="gap-1.5">
                   Review & Authorize <ArrowRight className="size-4" />
                 </Button>
               </div>

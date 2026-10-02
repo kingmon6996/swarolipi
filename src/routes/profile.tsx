@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
-      { title: "Profile | VoxAuth Digital Identity" },
+      { title: "Profile | Swarolipi Digital Identity" },
       { name: "description", content: "Manage your wallet-bound profile digital identity and human verification status." },
     ],
   }),
@@ -21,12 +21,12 @@ function ProfilePage() {
   if (!isConnected) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center">
-        <div className="max-w-md rounded-2xl border border-border bg-card p-8 shadow-voxauth">
+        <div className="max-w-md rounded-2xl border border-border bg-card p-8 shadow-swarolipi">
           <h2 className="font-display text-2xl font-extrabold text-foreground">Wallet Required</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Please connect your Web3 wallet to access your VoxAuth digital identity profile.
+            Please connect your Web3 wallet to access your Swarolipi digital identity profile.
           </p>
-          <Button variant="voxauth" className="mt-6 w-full" onClick={() => navigate({ to: "/" })}>
+          <Button variant="swarolipi" className="mt-6 w-full" onClick={() => navigate({ to: "/" })}>
             Return to Home & Connect
           </Button>
         </div>

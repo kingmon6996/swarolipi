@@ -174,7 +174,7 @@ export function WalletConnectModal({
                   <p className="mt-1 text-sm text-muted-foreground">
                     {isConnected
                       ? `Connected as ${profileName || "Digital Identity"}.`
-                      : "Select your Web3 wallet provider to continue with VoxAuth."}
+                      : "Select your Web3 wallet provider to continue with Swarolipi."}
                   </p>
                 </div>
                 <button
@@ -212,7 +212,7 @@ export function WalletConnectModal({
                     <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-purple-500/15 bg-purple-950/20 px-3.5 py-3">
                       <Lock className="mt-0.5 size-3.5 shrink-0 text-primary" />
                       <p className="text-xs leading-5 text-muted-foreground">
-                        Your wallet remains under your control. VoxAuth never requests or accesses private keys, seed phrases, or funds.
+                        Your wallet remains under your control. Swarolipi never requests or accesses private keys, seed phrases, or funds.
                       </p>
                     </div>
 
@@ -257,7 +257,7 @@ export function WalletConnectModal({
 
                     <div className="mt-5 flex gap-3">
                       <Button
-                        variant="voxauthOutline"
+                        variant="swarolipiOutline"
                         className="flex-1 text-xs"
                         onClick={() => setSelectedProvider(null)}
                       >
@@ -269,7 +269,7 @@ export function WalletConnectModal({
                         rel="noreferrer"
                         className="flex-1"
                       >
-                        <Button variant="voxauth" className="w-full gap-1.5 text-xs">
+                        <Button variant="swarolipi" className="w-full gap-1.5 text-xs">
                           Install {selectedProvider.name} <ExternalLink className="size-3.5" />
                         </Button>
                       </a>
@@ -310,7 +310,7 @@ export function WalletConnectModal({
 
                     <div className="mt-5">
                       <Button
-                        variant="voxauthOutline"
+                        variant="swarolipiOutline"
                         className="w-full"
                         onClick={() => setSelectedProvider(null)}
                       >
@@ -345,14 +345,14 @@ export function WalletConnectModal({
 
                     <div className="mt-5 flex gap-3">
                       <Button
-                        variant="voxauthOutline"
+                        variant="swarolipiOutline"
                         className="flex-1"
                         onClick={() => setSelectedProvider(null)}
                       >
                         Back
                       </Button>
                       <Button
-                        variant="voxauth"
+                        variant="swarolipi"
                         className="flex-1 gap-2"
                         onClick={handleRetry}
                       >
@@ -452,14 +452,14 @@ export function WalletConnectModal({
                     {/* Action Buttons */}
                     <div className="mt-5 flex gap-3">
                       <Button
-                        variant="voxauthOutline"
+                        variant="swarolipiOutline"
                         className="flex-1"
                         onClick={handleDisconnect}
                       >
                         Change Wallet
                       </Button>
                       <Button
-                        variant="voxauth"
+                        variant="swarolipi"
                         className="flex-1 gap-1.5"
                         onClick={handleContinue}
                       >

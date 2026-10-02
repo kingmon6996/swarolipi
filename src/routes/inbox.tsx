@@ -19,10 +19,10 @@ export const Route = createFileRoute("/inbox")({
   },
   head: () => ({
     meta: [
-      { title: "Inbox | VoxAuth Wallet Identity Messaging" },
+      { title: "Inbox | Swarolipi Wallet Identity Messaging" },
       {
         name: "description",
-        content: "Wallet-based inbox for VoxAuth. Communicate securely using your Web3 wallet identity.",
+        content: "Wallet-based inbox for Swarolipi. Communicate securely using your Web3 wallet identity.",
       },
     ],
   }),
@@ -40,12 +40,12 @@ function InboxPage() {
   if (!isConnected) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center">
-        <div className="max-w-md rounded-2xl border border-border bg-card p-8 shadow-voxauth">
+        <div className="max-w-md rounded-2xl border border-border bg-card p-8 shadow-swarolipi">
           <h2 className="font-display text-2xl font-extrabold text-foreground">Wallet Required</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Your wallet is your identity. Please connect your Web3 wallet to access your VoxAuth inbox.
+            Your wallet is your identity. Please connect your Web3 wallet to access your Swarolipi inbox.
           </p>
-          <Button variant="voxauth" className="mt-6 w-full" onClick={() => navigate({ to: "/" })}>
+          <Button variant="swarolipi" className="mt-6 w-full" onClick={() => navigate({ to: "/" })}>
             Return to Home & Connect
           </Button>
         </div>

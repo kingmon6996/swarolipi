@@ -68,11 +68,11 @@ export function SettingsView() {
           <div>
             <h2 className="font-display text-lg font-bold text-foreground">Authorized Applications</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Third-party dApps with active access to your VoxAuth identity signals.
+              Third-party dApps with active access to your Swarolipi identity signals.
             </p>
           </div>
           <Link to="/developer/demo">
-            <Button variant="voxauthOutline" size="sm" className="gap-1.5 text-xs">
+            <Button variant="swarolipiOutline" size="sm" className="gap-1.5 text-xs">
               Developer Demo <ExternalLink className="size-3.5" />
             </Button>
           </Link>
@@ -163,7 +163,7 @@ export function SettingsView() {
           <div className="pt-3 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold text-foreground">Account Session</p>
-              <p className="text-[0.7rem] text-muted-foreground">Disconnect your wallet and log out of VoxAuth</p>
+              <p className="text-[0.7rem] text-muted-foreground">Disconnect your wallet and log out of Swarolipi</p>
             </div>
             <Button
               variant="destructive"
@@ -190,7 +190,7 @@ export function SettingsView() {
           <div>
             <h3 className="font-display text-base font-bold text-foreground">Privacy Guarantee</h3>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-              <strong className="text-foreground">Your wallet remains under your control.</strong> VoxAuth never requests, accesses, or stores your private key, seed phrase, or wallet passwords.
+              <strong className="text-foreground">Your wallet remains under your control.</strong> Swarolipi never requests, accesses, or stores your private key, seed phrase, or wallet passwords.
             </p>
           </div>
         </div>

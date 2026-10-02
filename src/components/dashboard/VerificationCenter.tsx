@@ -27,7 +27,7 @@ export function VerificationCenter() {
             Verification Center
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Complete the verification layers required to establish your VoxAuth identity. Each verification layer provides an independent trust signal.
+            Complete the verification layers required to establish your Swarolipi identity. Each verification layer provides an independent trust signal.
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export function VerificationCenter() {
           <div className="mt-8">
             <Link to="/human-verification">
               <Button
-                variant={humanVerified ? "voxauthOutline" : "voxauth"}
+                variant={humanVerified ? "swarolipiOutline" : "swarolipi"}
                 className="w-full gap-2 text-xs"
               >
                 {humanVerified ? "View Verification Result" : "Start Human Verification"}
@@ -147,7 +147,7 @@ export function VerificationCenter() {
           <div className="mt-8">
             <Link to="/identity-verification">
               <Button
-                variant={identityVerified ? "voxauthOutline" : "voxauth"}
+                variant={identityVerified ? "swarolipiOutline" : "swarolipi"}
                 className="w-full gap-2 text-xs"
               >
                 {identityVerified ? "View Verification Result" : "Verify Identity"}

@@ -48,7 +48,7 @@ export function MessageDetailView({
   });
 
   const isAppRevoked =
-    message.applicationId && !isAuthorized(message.applicationId) && message.applicationId !== "voxauth-identity";
+    message.applicationId && !isAuthorized(message.applicationId) && message.applicationId !== "swarolipi-identity";
 
   const formattedDate = new Date(message.createdAt).toLocaleDateString("en-US", {
     weekday: "short",
@@ -189,7 +189,7 @@ export function MessageDetailView({
             <span>Unverified Sender Warning</span>
           </div>
           <p className="text-amber-800 leading-relaxed">
-            This sender has not been verified by VoxAuth. Never share private keys, seed phrases, or unencrypted credential files.
+            This sender has not been verified by Swarolipi. Never share private keys, seed phrases, or unencrypted credential files.
           </p>
         </div>
       )}
@@ -283,14 +283,14 @@ export function MessageDetailView({
                       <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-3">
                         <div className="flex items-center gap-2 font-display text-sm font-bold text-foreground">
                           <ShieldCheck className="size-4 text-primary" />
-                          <span>VoxAuth Action Request</span>
+                          <span>Swarolipi Action Request</span>
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
                           This message requires an interactive identity response from your wallet.
                         </p>
                         <Button
                           onClick={() => handleActionClick(msg.action)}
-                          variant="voxauth"
+                          variant="swarolipi"
                           size="sm"
                           className="gap-2 text-xs font-bold px-4"
                         >
