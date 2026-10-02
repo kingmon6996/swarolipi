@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Human Verification Stream</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 { margin-bottom: 10px; font-weight: 400; color: #e0e0e0; }
+        .container { position: relative; width: 640px; height: 480px; background: #1e1e1e; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        video { display: none; } /* Kept hidden, canvas handles the display loop */
+        canvas { width: 100%; height: 100%; object-fit: cover; }
+        .status-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        .status-searching { background-color: #ff9800; color: #000; }
+        .status-human { background-color: #4caf50; color: #fff; }
+        .status-fail { background-color: #f44336; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <h1>Live Human Verification</h1>
+    <div class="container">
+        <video id="webcam" autoplay playsinline width="640" height="480"></video>
+        <canvas id="outputCanvas"></canvas>
+        <div id="statusLabel" class="status-overlay status-searching">Initializing Camera...</div>
+    </div>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('outputCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusLabel = document.getElementById('statusLabel');
+
+        // Set explicit processing canvas metrics
+        canvas.width = 640;
+        canvas.height = 480;
+
+        // Change this URL to your deployed Hugging Face space endpoint when live
+        // Example: "https://hf.space"
+        const API_URL = "/verify-stream"; 
+
+        // 1. Request access to the webcam stream
+        navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false })
+            .then(stream => {
+                video.srcObject = stream;
+                statusLabel.innerText = "Scanning for Human...";
+                statusLabel.className = "status-overlay status-searching";
+                
+                // Start drawing locally right away
+                requestAnimationFrame(renderLoop);
+                // Start API polling cycle every 400ms to preserve server CPU limits
+                setInterval(sendFrameToAPI, 400);
+            })
+            .catch(err => {
+                console.error("Webcam blocked or unavailable: ", err);
+                statusLabel.innerText = "Camera Access Denied";
+                statusLabel.className = "status-overlay status-fail";
+            });
+
+        // 2. Render the local camera frame cleanly onto the canvas
+        function renderLoop() {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            requestAnimationFrame(renderLoop);
+        }
+
+        // 3. Grab canvas state, convert to JPEG blob, and send to the Flask API
+        let requestInProgress = false;
+
+        function sendFrameToAPI() {
+            if (requestInProgress) return;
+            requestInProgress = true;
+
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    requestInProgress = false;
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('image', blob, 'frame.jpg');
+
+                fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Update UI text and classes dynamically based on API validation feedback
+                    if (data.status === "SUCCESS") {
+                        statusLabel.innerText = "✓ HUMAN VERIFIED";
+                        statusLabel.className = "status-overlay status-human";
+                    } else if (data.status === "FAILED") {
+                        statusLabel.innerText = "✖ NOT A HUMAN / BLOCKED FACE";
+                        statusLabel.className = "status-overlay status-fail";
+                    } else {
+                        statusLabel.innerText = "Scanning for Human...";
+                        statusLabel.className = "status-overlay status-searching";
+                    }
+                })
+                .catch(err => {
+                    console.error("API Communication error:", err);
+                })
+                .finally(() => {
+                    requestInProgress = false;
+                });
+            }, 'image/jpeg', 0.7); // 0.7 quality factor keeps data payloads small and transfers fast
+        }
+    </script>
+</body>
+</html>
