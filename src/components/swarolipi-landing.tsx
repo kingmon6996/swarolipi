@@ -39,6 +39,13 @@ import { FluidCursor } from "@/components/ui/fluid-cursor";
 
 const navItems = ["Product", "How It Works", "Security", "Developers"];
 
+const navItemData = [
+  { name: "Product", icon: Sparkles },
+  { name: "How It Works", icon: Zap },
+  { name: "Security", icon: ShieldCheck },
+  { name: "Developers", icon: Code2 },
+];
+
 const ecosystemCompanies = [
   { name: "VoteDAO", category: "Governance & Voting", icon: "🏛️", domain: "votedao.eth" },
   { name: "Uniswap", category: "DeFi Protocol", icon: "🦄", domain: "uniswap.org" },
@@ -117,6 +124,8 @@ export function SwarolipiLanding() {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
 
+  const lenisRef = useRef<Lenis | null>(null);
+
   // Lenis Smooth Scroll Setup
   useEffect(() => {
     const lenis = new Lenis({
@@ -124,6 +133,7 @@ export function SwarolipiLanding() {
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       touchMultiplier: 2,
     });
+    lenisRef.current = lenis;
 
     function raf(time: number) {
       lenis.raf(time);
@@ -133,8 +143,34 @@ export function SwarolipiLanding() {
 
     return () => {
       lenis.destroy();
+      lenisRef.current = null;
     };
   }, []);
+
+  const handleScrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    e.preventDefault();
+    const targetElement = document.getElementById(sectionId);
+    if (targetElement) {
+      if (lenisRef.current) {
+        lenisRef.current.scrollTo(targetElement, { offset: -90 });
+      } else {
+        const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
+        window.scrollTo({
+          top: elementPosition - 90,
+          behavior: "smooth",
+        });
+      }
+    }
+  };
+
+  const handleScrollToTop = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   // GSAP Sideways Drawer Animation
   const openDrawer = () => {
@@ -237,20 +273,30 @@ export function SwarolipiLanding() {
         className="fixed inset-x-0 top-0 z-40 border-b border-transparent bg-transparent transition-all duration-500"
       >
         <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-5 sm:px-8" aria-label="Main navigation">
-          <a href="#top" className="flex items-center gap-2" aria-label="Swarolipi home">
+          <a href="#top" onClick={handleScrollToTop} className="flex items-center gap-2" aria-label="Swarolipi home">
             <img src="/brand.png" alt="Swarolipi" className="h-[120px] w-auto object-contain drop-shadow-[0_0_12px_rgba(139,92,246,0.4)]" />
           </a>
 
-          <div className="hidden items-center gap-8 md:flex">
-            {navItems.map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase().replaceAll(" ", "-")}`}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {item}
-              </a>
-            ))}
+          <div className="hidden items-center gap-1 rounded-full border border-purple-500/20 bg-card/40 p-1.5 backdrop-blur-xl md:flex">
+            {navItemData.map(({ name, icon: Icon }) => {
+              const sectionId = name.toLowerCase().replaceAll(" ", "-");
+              return (
+                <a
+                  key={name}
+                  href={`#${sectionId}`}
+                  onClick={(e) => handleScrollToSection(e, sectionId)}
+                  className="group relative inline-flex items-center h-9 px-3.5 rounded-full border border-transparent text-xs font-semibold text-muted-foreground transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-purple-500/30 hover:bg-purple-950/40 hover:text-foreground hover:shadow-[0_0_15px_rgba(139,92,246,0.25)]"
+                  title={name}
+                >
+                  <Icon className="size-4 shrink-0 text-purple-300 transition-colors duration-200 group-hover:text-purple-200" />
+                  <span className="grid grid-cols-[0fr] opacity-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:grid-cols-[1fr] group-hover:opacity-100">
+                    <span className="overflow-hidden whitespace-nowrap pl-2">
+                      {name}
+                    </span>
+                  </span>
+                </a>
+              );
+            })}
           </div>
 
           <div className="hidden items-center gap-3 md:flex">
@@ -318,7 +364,7 @@ export function SwarolipiLanding() {
           >
             {/* Drawer Header */}
             <div className="flex items-center justify-between border-b border-purple-500/15 pb-6">
-              <a href="#top" onClick={closeDrawer} className="flex items-center gap-2">
+              <a href="#top" onClick={(e) => { closeDrawer(); handleScrollToTop(e); }} className="flex items-center gap-2">
                 <img src="/brand.png" alt="Swarolipi" className="h-10 w-auto object-contain" />
               </a>
               <Button
@@ -337,18 +383,24 @@ export function SwarolipiLanding() {
               <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.2em] text-primary">
                 Navigation
               </p>
-              {navItems.map((item, idx) => (
-                <a
-                  key={item}
-                  ref={(el) => { menuItemsRef.current[idx] = el; }}
-                  href={`#${item.toLowerCase().replaceAll(" ", "-")}`}
-                  onClick={closeDrawer}
-                  className="group flex items-center justify-between rounded-xl border border-transparent px-4 py-3 text-2xl font-extrabold text-foreground transition-all hover:border-purple-500/30 hover:bg-purple-950/30 hover:text-purple-300"
-                >
-                  <span>{item}</span>
-                  <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-300" />
-                </a>
-              ))}
+              {navItems.map((item, idx) => {
+                const sectionId = item.toLowerCase().replaceAll(" ", "-");
+                return (
+                  <a
+                    key={item}
+                    ref={(el) => { menuItemsRef.current[idx] = el; }}
+                    href={`#${sectionId}`}
+                    onClick={(e) => {
+                      closeDrawer();
+                      handleScrollToSection(e, sectionId);
+                    }}
+                    className="group flex items-center justify-between rounded-xl border border-transparent px-4 py-3 text-2xl font-extrabold text-foreground transition-all hover:border-purple-500/30 hover:bg-purple-950/30 hover:text-purple-300"
+                  >
+                    <span>{item}</span>
+                    <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-purple-300" />
+                  </a>
+                );
+              })}
             </div>
 
             {/* Footer Action inside Drawer */}
