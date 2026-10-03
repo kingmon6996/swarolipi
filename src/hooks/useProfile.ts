@@ -5,13 +5,17 @@ import { profileService, UserProfile } from "@/services/profileService";
 export type { UserProfile };
 
 export function useProfile() {
-  const { walletAddress, isConnected } = useWallet();
+  const { walletAddress, walletProvider, chain, isConnected } = useWallet();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isNewConnection, setIsNewConnection] = useState<boolean>(false);
 
   useEffect(() => {
     if (isConnected && walletAddress) {
-      const loaded = profileService.loadOrCreateProfile(walletAddress);
+      const loaded = profileService.loadOrCreateProfile(
+        walletAddress,
+        walletProvider || undefined,
+        chain || undefined
+      );
       setProfile(loaded);
       setIsNewConnection(profileService.isNewConnection());
     } else {
@@ -19,7 +23,7 @@ export function useProfile() {
       setProfile(null);
       setIsNewConnection(false);
     }
-  }, [isConnected, walletAddress]);
+  }, [isConnected, walletAddress, walletProvider, chain]);
 
   useEffect(() => {
     const unsubscribe = profileService.subscribe((updatedProfile) => {
@@ -40,8 +44,8 @@ export function useProfile() {
     return profileService.completeHumanVerification();
   };
 
-  const completeIdentityVerification = (country: string, documentType: string) => {
-    return profileService.completeIdentityVerification(country, documentType);
+  const completeIdentityVerification = (country: string, documentType: string, documentHash?: string) => {
+    return profileService.completeIdentityVerification(country, documentType, documentHash);
   };
 
   const resetVerifications = () => {
@@ -64,6 +68,7 @@ export function useProfile() {
     identityVerified: Boolean(profile?.identityVerified),
     identityCountry: profile?.identityCountry || null,
     identityDocumentType: profile?.identityDocumentType || null,
+    identityDocumentHash: profile?.identityDocumentHash || null,
     identityVerifiedAt: profile?.identityVerifiedAt || null,
     isNewConnection,
     updateName,
