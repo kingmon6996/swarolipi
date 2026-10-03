@@ -37,6 +37,27 @@ Connect to `/face/ws` using `ws://` locally or `wss://` over HTTPS. Send each ca
 
 `GET /health` returns `{"status":"ok"}`. Set `CORS_ORIGINS` to a comma-separated list of allowed browser origins; it defaults to `*`.
 
+## OCR endpoint
+
+Send an image as multipart form data in the `image` field to `POST /ocr`. The endpoint accepts image files up to 8 MiB and returns extracted document information as JSON:
+
+The home page includes an OCR test panel to preview a selected image, submit it, and display the returned data.
+
+```json
+{
+  "status": "SUCCESS",
+  "data": {
+    "document_type": "PAN",
+    "name": "EXAMPLE NAME",
+    "dob": "01/01/1990",
+    "document_id": "ABCDE1234F",
+    "identity_hash": "<64-character SHA-256 hex digest>"
+  }
+}
+```
+
+`identity_hash` is a SHA-256 digest generated from the extracted name, date of birth, and document ID. Invalid or missing images return a JSON `ERROR` response. OCR uses RapidOCR, installed from `requirements.txt`.
+
 ## Voice comparison WebSocket
 
 Connect to `/human/ws` and send one JSON text message with exactly five base64-encoded WAV recordings in a `voices` array:

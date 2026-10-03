@@ -63,6 +63,11 @@
         .result th, .result td { border: 1px solid #444; padding: 8px; text-align: center; }
         .result th { background: #292929; }
         .result ul { padding-left: 22px; line-height: 1.6; }
+        .ocr-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .ocr-controls input { flex: 1 1 220px; min-width: 0; color: #ddd; }
+        .ocr-preview { display: none; max-width: 100%; max-height: 320px; margin-top: 16px; border-radius: 8px; object-fit: contain; }
+        .ocr-status { min-height: 24px; margin-top: 12px; color: #ddd; }
+        .ocr-data { overflow-wrap: anywhere; white-space: pre-wrap; background: #111; border-radius: 8px; padding: 14px; }
         @media (max-width: 540px) {
             body { padding: 18px 12px; }
             .section { padding: 16px; }
@@ -101,6 +106,18 @@
             <div id="voiceStatus" class="voice-status" role="status" aria-live="polite"></div>
             <div id="voiceResult" class="result"></div>
         </section>
+
+        <section class="section" aria-labelledby="ocrHeading">
+            <h2 id="ocrHeading">OCR document check</h2>
+            <p class="voice-help">Select an image of a document to extract its type, name, date of birth, document ID, and identity hash.</p>
+            <div class="ocr-controls">
+                <input id="ocrImage" type="file" accept="image/*" aria-label="Choose document image">
+                <button id="ocrSubmit" type="button" disabled>Extract data</button>
+            </div>
+            <img id="ocrPreview" class="ocr-preview" alt="Selected document preview">
+            <div id="ocrStatus" class="ocr-status" role="status" aria-live="polite"></div>
+            <pre id="ocrData" class="ocr-data" hidden></pre>
+        </section>
     </main>
 
     <script>
@@ -109,6 +126,12 @@
         const ctx = canvas.getContext('2d');
         const statusLabel = document.getElementById('statusLabel');
         const gesturePanel = document.getElementById('gesturePanel');
+        const ocrImageInput = document.getElementById('ocrImage');
+        const ocrSubmitButton = document.getElementById('ocrSubmit');
+        const ocrPreview = document.getElementById('ocrPreview');
+        const ocrStatus = document.getElementById('ocrStatus');
+        const ocrData = document.getElementById('ocrData');
+        let ocrPreviewUrl = null;
 
         canvas.width = 640;
         canvas.height = 480;
@@ -473,12 +496,70 @@
         compareButton.addEventListener('click', compareRecordings);
         selectPrompts();
 
+        ocrImageInput.addEventListener('change', () => {
+            const image = ocrImageInput.files[0];
+            ocrSubmitButton.disabled = !image;
+            ocrData.hidden = true;
+            ocrData.textContent = "";
+            if (ocrPreviewUrl) {
+                URL.revokeObjectURL(ocrPreviewUrl);
+                ocrPreviewUrl = null;
+            }
+            if (image) {
+                ocrPreviewUrl = URL.createObjectURL(image);
+                ocrPreview.src = ocrPreviewUrl;
+                ocrPreview.style.display = "block";
+                ocrStatus.textContent = "";
+            } else {
+                ocrPreview.removeAttribute("src");
+                ocrPreview.style.display = "none";
+            }
+        });
+
+        ocrSubmitButton.addEventListener('click', async () => {
+            const image = ocrImageInput.files[0];
+            if (!image) {
+                ocrStatus.textContent = "Choose an image first.";
+                return;
+            }
+            if (image.size > 8 * 1024 * 1024) {
+                ocrStatus.textContent = "Image exceeds the 8 MiB upload limit.";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("image", image);
+            ocrSubmitButton.disabled = true;
+            ocrStatus.textContent = "Extracting document data...";
+            ocrData.hidden = true;
+            try {
+                const response = await fetch("/ocr", {
+                    method: "POST",
+                    body: formData,
+                });
+                const result = await response.json();
+                if (!response.ok || result.status !== "SUCCESS" || !result.data) {
+                    ocrStatus.textContent = result.message || "OCR request failed.";
+                    return;
+                }
+                ocrData.textContent = JSON.stringify(result.data, null, 2);
+                ocrData.hidden = false;
+                ocrStatus.textContent = "Document data extracted successfully.";
+            } catch (error) {
+                console.error("OCR request failed:", error);
+                ocrStatus.textContent = "Could not reach the OCR service. Please try again.";
+            } finally {
+                ocrSubmitButton.disabled = !ocrImageInput.files[0];
+            }
+        });
+
         window.addEventListener('beforeunload', () => {
             if (frameTimer !== null) clearInterval(frameTimer);
             if (faceSocket && faceSocket.readyState < WebSocket.CLOSING) faceSocket.close();
             if (voiceSocket && voiceSocket.readyState < WebSocket.CLOSING) voiceSocket.close();
             if (audioStream) audioStream.getTracks().forEach(track => track.stop());
             if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
+            if (ocrPreviewUrl) URL.revokeObjectURL(ocrPreviewUrl);
         });
     </script>
 </body>

@@ -7,3 +7,6 @@ human/*
 __pycache__/
 .env
 pretrained_models/
+test.jpeg
+test2.jpeg
+test3.jpeg

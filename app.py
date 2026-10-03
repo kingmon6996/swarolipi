@@ -7,6 +7,7 @@ from flask_cors import CORS
 from database import init_db
 from route.face import face_blueprint
 from route.human import MAX_WEBSOCKET_MESSAGE_BYTES, human_blueprint
+from route.ocr import ocr_blueprint
 from route.profile import profile_blueprint
 
 from dotenv import load_dotenv
@@ -20,6 +21,7 @@ app.config["SOCK_SERVER_OPTIONS"] = {
 
 app.register_blueprint(face_blueprint, url_prefix="/face")
 app.register_blueprint(human_blueprint, url_prefix="/human")
+app.register_blueprint(ocr_blueprint, url_prefix="/ocr")
 app.register_blueprint(profile_blueprint, url_prefix="/profile")
 
 # Initialize PostgreSQL / SQLModel database tables
