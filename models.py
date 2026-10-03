@@ -48,3 +48,35 @@ class Profile(SQLModel, table=True):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+
+
+class AuthToken(SQLModel, table=True):
+    __tablename__ = "auth_token"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    token: str = Field(index=True, unique=True, nullable=False)
+    token_hash: str = Field(index=True, nullable=False)
+    wallet_address: str = Field(index=True, nullable=False)
+    dapp_name: str = Field(default="Third Party dApp")
+    dapp_domain: Optional[str] = Field(default="dapp.example.eth")
+    scopes: str = Field(nullable=False)  # Comma-separated scopes: "is_human,identity,name,profile_pic,wallet_address"
+    is_revoked: bool = Field(default=False)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    revoked_at: Optional[datetime] = Field(default=None)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "token": self.token,
+            "token_hash": self.token_hash,
+            "wallet_address": self.wallet_address,
+            "dapp_name": self.dapp_name,
+            "dapp_domain": self.dapp_domain,
+            "scopes": [s.strip() for s in self.scopes.split(",") if s.strip()],
+            "is_revoked": self.is_revoked,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "revoked_at": self.revoked_at.isoformat() if self.revoked_at else None,
+        }
+

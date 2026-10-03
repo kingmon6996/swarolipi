@@ -6,6 +6,10 @@ import numpy as np
 from datetime import datetime
 from flask import Blueprint, jsonify, request
 from rapidocr_onnxruntime import RapidOCR
+from sqlmodel import select, func
+
+from database import get_session
+from models import Profile
 
 
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
@@ -902,6 +906,9 @@ def extract_document(image_path):
 @ocr_blueprint.route("", methods=["POST"])
 def extract_image_data():
     uploaded_image = request.files.get("image")
+    country = request.form.get("country") or request.args.get("country") or ""
+    wallet_address = request.form.get("wallet_address") or request.form.get("walletAddress") or request.args.get("wallet_address") or ""
+
     if uploaded_image is None:
         return jsonify({
             "status": "ERROR",
@@ -932,4 +939,56 @@ def extract_image_data():
         }), 400
 
     result = extract_document(image)
-    return jsonify({"status": "SUCCESS", "data": result}), 200
+    doc_type = result.get("document_type", "UNKNOWN")
+
+    # Enforce India document restriction: only PAN, AADHAAR, VOTER allowed!
+    is_india = country.strip().lower() in ("india", "in") or country.strip() == "India"
+    if is_india and doc_type not in ("PAN", "AADHAAR", "VOTER"):
+        return jsonify({
+            "status": "ERROR",
+            "message": f"For India, only PAN Card, Aadhaar Card, and Voter ID documents are accepted. Detected document: {doc_type}",
+            "data": result,
+        }), 422
+
+    # Save/Update profile in PostgreSQL SQLModel DB if wallet_address is provided
+    updated_profile = None
+    if wallet_address and isinstance(wallet_address, str) and wallet_address.strip():
+        address_clean = wallet_address.strip()
+        address_lower = address_clean.lower()
+
+        with get_session() as session:
+            statement = select(Profile).where(func.lower(Profile.wallet_address) == address_lower)
+            profile = session.exec(statement).first()
+
+            now_iso = datetime.utcnow().isoformat()
+            if profile:
+                profile.identity_verified = True
+                profile.identity_country = country or "India"
+                profile.identity_document_type = doc_type
+                profile.identity_document_hash = result.get("identity_hash")
+                profile.identity_verified_at = now_iso
+                profile.updated_at = datetime.utcnow()
+                session.add(profile)
+                session.commit()
+                session.refresh(profile)
+                updated_profile = profile.to_dict()
+            else:
+                default_name = f"User {address_clean[:6]}...{address_clean[-4:]}"
+                new_profile = Profile(
+                    wallet_address=address_clean,
+                    display_name=default_name,
+                    wallet_verified=True,
+                    identity_verified=True,
+                    identity_country=country or "India",
+                    identity_document_type=doc_type,
+                    identity_document_hash=result.get("identity_hash"),
+                    identity_verified_at=now_iso,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                )
+                session.add(new_profile)
+                session.commit()
+                session.refresh(new_profile)
+                updated_profile = new_profile.to_dict()
+
+    return jsonify({"status": "SUCCESS", "data": result, "profile": updated_profile}), 200

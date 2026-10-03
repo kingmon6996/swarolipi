@@ -6,7 +6,12 @@ human/*
 .venv
 __pycache__/
 .env
+token.json
 pretrained_models/
 test.jpeg
 test2.jpeg
 test3.jpeg
+SwarolipiFaucetRegistry.sol
+transaction.json
+deploy_faucet.py
+webt.py

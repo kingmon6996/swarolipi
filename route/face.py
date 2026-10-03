@@ -13,21 +13,18 @@ from flask_sock import Sock
 MAX_FRAME_BYTES = 8 * 1024 * 1024
 LEFT_EYE = (33, 160, 158, 133, 153, 144)
 RIGHT_EYE = (362, 385, 387, 263, 373, 380)
-MOUTH_TOP = 13
-MOUTH_BOTTOM = 14
-MOUTH_LEFT = 78
-MOUTH_RIGHT = 308
+LEFT_IRIS_CENTER = 468
+RIGHT_IRIS_CENTER = 473
+GAZE_LEFT_THRESHOLD = 0.35
+GAZE_RIGHT_THRESHOLD = 0.65
+GAZE_UP_THRESHOLD = 0.28
+GAZE_DOWN_THRESHOLD = 0.72
+HEAD_YAW_THRESHOLD = 12
+HEAD_PITCH_THRESHOLD = 12
 CLOSED_EAR_THRESHOLD = 0.20
 OPEN_EAR_THRESHOLD = 0.24
 MIN_BLINK_DURATION = 0.06
 MAX_BLINK_DURATION = 0.50
-MOUTH_OPEN_THRESHOLD = 0.18
-MOUTH_CLOSED_THRESHOLD = 0.12
-POSE_VISIBILITY_THRESHOLD = 0.55
-HAND_RAISE_MARGIN = 0.03
-HAND_LOWER_MARGIN = 0.02
-FINGER_EXTENDED_ANGLE = 150
-FINGER_CURLED_ANGLE = 130
 ALLOWED_ORIGINS = {
     origin.strip()
     for origin in os.environ.get("CORS_ORIGINS", "*").split(",")
@@ -47,45 +44,101 @@ def eye_aspect_ratio(points, indices):
     return (vertical_a + vertical_b) / (2 * horizontal)
 
 
-def mouth_aspect_ratio(points):
-    mouth_height = math.dist(points[MOUTH_TOP], points[MOUTH_BOTTOM])
-    mouth_width = math.dist(points[MOUTH_LEFT], points[MOUTH_RIGHT])
-    if mouth_width <= 1e-6:
+def classify_gaze(points):
+    eye_measurements = (
+        (LEFT_IRIS_CENTER, 33, 133, 159, 145),
+        (RIGHT_IRIS_CENTER, 362, 263, 386, 374),
+    )
+    horizontal_positions = []
+    vertical_positions = []
+    for iris_id, corner_a, corner_b, upper_id, lower_id in eye_measurements:
+        left_corner = min(points[corner_a][0], points[corner_b][0])
+        right_corner = max(points[corner_a][0], points[corner_b][0])
+        eye_width = right_corner - left_corner
+        eye_height = points[lower_id][1] - points[upper_id][1]
+        if eye_width <= 1e-6 or eye_height <= 1e-6:
+            continue
+        horizontal_positions.append(
+            (points[iris_id][0] - left_corner) / eye_width
+        )
+        vertical_positions.append(
+            (points[iris_id][1] - points[upper_id][1]) / eye_height
+        )
+
+    if not horizontal_positions or not vertical_positions:
+        return "UNKNOWN"
+
+    horizontal = sum(horizontal_positions) / len(horizontal_positions)
+    vertical = sum(vertical_positions) / len(vertical_positions)
+    if horizontal < GAZE_LEFT_THRESHOLD:
+        return "LEFT"
+    if horizontal > GAZE_RIGHT_THRESHOLD:
+        return "RIGHT"
+    if vertical < GAZE_UP_THRESHOLD:
+        return "UP"
+    if vertical > GAZE_DOWN_THRESHOLD:
+        return "DOWN"
+    return "CENTER"
+
+
+def head_pose(points, width, height):
+    image_points = np.array(
+        [points[index] for index in (1, 152, 33, 263, 61, 291)],
+        dtype=np.float64,
+    )
+    model_points = np.array(
+        [
+            (0.0, 0.0, 0.0),
+            (0.0, -330.0, -65.0),
+            (-225.0, 170.0, -135.0),
+            (225.0, 170.0, -135.0),
+            (-150.0, -150.0, -125.0),
+            (150.0, -150.0, -125.0),
+        ],
+        dtype=np.float64,
+    )
+    focal_length = float(width)
+    camera_matrix = np.array(
+        [
+            [focal_length, 0.0, width / 2],
+            [0.0, focal_length, height / 2],
+            [0.0, 0.0, 1.0],
+        ],
+        dtype=np.float64,
+    )
+    success, rotation_vector, _ = cv2.solvePnP(
+        model_points,
+        image_points,
+        camera_matrix,
+        np.zeros((4, 1), dtype=np.float64),
+        flags=cv2.SOLVEPNP_ITERATIVE,
+    )
+    if not success:
         return None
-    return mouth_height / mouth_width
 
+    rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
+    yaw = math.degrees(math.atan2(-rotation_matrix[2, 0], math.hypot(
+        rotation_matrix[0, 0], rotation_matrix[1, 0]
+    )))
+    pitch = math.degrees(math.atan2(
+        rotation_matrix[2, 1], rotation_matrix[2, 2]
+    ))
+    if yaw < -HEAD_YAW_THRESHOLD:
+        movement = "LEFT"
+    elif yaw > HEAD_YAW_THRESHOLD:
+        movement = "RIGHT"
+    elif pitch < -HEAD_PITCH_THRESHOLD:
+        movement = "UP"
+    elif pitch > HEAD_PITCH_THRESHOLD:
+        movement = "DOWN"
+    else:
+        movement = "CENTER"
 
-def joint_angle(first, joint, last):
-    first_vector = (first.x - joint.x, first.y - joint.y)
-    last_vector = (last.x - joint.x, last.y - joint.y)
-    first_length = math.hypot(*first_vector)
-    last_length = math.hypot(*last_vector)
-    if first_length <= 1e-6 or last_length <= 1e-6:
-        return None
-    cosine = (
-        first_vector[0] * last_vector[0] + first_vector[1] * last_vector[1]
-    ) / (first_length * last_length)
-    return math.degrees(math.acos(max(-1.0, min(1.0, cosine))))
-
-
-def classify_hand_shape(hand_landmarks):
-    landmarks = hand_landmarks.landmark
-    finger_joints = ((5, 6, 8), (9, 10, 12), (13, 14, 16), (17, 18, 20))
-    angles = [
-        joint_angle(landmarks[mcp], landmarks[pip], landmarks[tip])
-        for mcp, pip, tip in finger_joints
-    ]
-    valid_angles = [angle for angle in angles if angle is not None]
-    if len(valid_angles) < 3:
-        return "TRACKING"
-
-    extended = sum(angle >= FINGER_EXTENDED_ANGLE for angle in valid_angles)
-    curled = sum(angle <= FINGER_CURLED_ANGLE for angle in valid_angles)
-    if extended >= 3:
-        return "OPEN"
-    if curled >= 3:
-        return "CLOSED"
-    return "PARTIAL"
+    return {
+        "movement": movement,
+        "yaw": round(yaw, 1),
+        "pitch": round(pitch, 1),
+    }
 
 
 class BlinkDetector:
@@ -121,167 +174,68 @@ class BlinkDetector:
         return False
 
 
-class DebouncedBoolean:
-    def __init__(self, initial=False, required_frames=3):
-        self.value = initial
-        self.pending = None
-        self.frames = 0
-        self.required_frames = required_frames
-
-    def update(self, candidate):
-        if candidate is None or candidate == self.value:
-            self.pending = None
-            self.frames = 0
-            return self.value
-        if candidate == self.pending:
-            self.frames += 1
-        else:
-            self.pending = candidate
-            self.frames = 1
-        if self.frames >= self.required_frames:
-            self.value = candidate
-            self.pending = None
-            self.frames = 0
-        return self.value
-
-
-class HandShapeState:
+class FaceAnalyzer:
     def __init__(self):
-        self.shape = "TRACKING"
-        self.pending = None
-        self.frames = 0
-
-    def update(self, shape):
-        if shape == "TRACKING" or shape == self.shape:
-            self.pending = None
-            self.frames = 0
-            return self.shape
-        if shape == self.pending:
-            self.frames += 1
-        else:
-            self.pending = shape
-            self.frames = 1
-        if self.frames >= 3:
-            self.shape = shape
-            self.pending = None
-            self.frames = 0
-        return self.shape
-
-    def reset(self):
-        self.shape = "TRACKING"
-        self.pending = None
-        self.frames = 0
-
-
-def hand_above_shoulder(pose_landmarks, currently_raised):
-    if pose_landmarks is None:
-        return None
-    pose_api = mp.solutions.pose
-    pose = pose_landmarks.landmark
-    sides = (
-        (pose_api.PoseLandmark.LEFT_SHOULDER, pose_api.PoseLandmark.LEFT_WRIST),
-        (pose_api.PoseLandmark.RIGHT_SHOULDER, pose_api.PoseLandmark.RIGHT_WRIST),
-    )
-    visible_sides = []
-    margin = HAND_LOWER_MARGIN if currently_raised else HAND_RAISE_MARGIN
-    for shoulder_id, wrist_id in sides:
-        shoulder = pose[shoulder_id.value]
-        wrist = pose[wrist_id.value]
-        if (
-            shoulder.visibility >= POSE_VISIBILITY_THRESHOLD
-            and wrist.visibility >= POSE_VISIBILITY_THRESHOLD
-        ):
-            visible_sides.append(wrist.y < shoulder.y - margin)
-    return any(visible_sides) if visible_sides else None
-
-
-class GestureAnalyzer:
-    def __init__(self):
-        self.holistic = mp.solutions.holistic.Holistic(
-            model_complexity=1,
-            smooth_landmarks=True,
-            refine_face_landmarks=True,
+        self.mesh = mp.solutions.face_mesh.FaceMesh(
+            static_image_mode=False,
+            max_num_faces=2,
+            refine_landmarks=True,
             min_detection_confidence=0.6,
             min_tracking_confidence=0.6,
         )
         self.blinks = BlinkDetector()
-        self.mouth = DebouncedBoolean()
-        self.hand_raised = DebouncedBoolean()
-        self.hand_shapes = {
-            "left": HandShapeState(),
-            "right": HandShapeState(),
-        }
 
     def analyze(self, frame):
         height, width = frame.shape[:2]
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        result = self.holistic.process(rgb)
-        now = time.monotonic()
-        face = None
-        blink_detected = False
-        mouth_open = None
-
-        if result.face_landmarks:
-            points = [
-                (landmark.x * width, landmark.y * height)
-                for landmark in result.face_landmarks.landmark
-            ]
-            xs, ys = zip(*points)
-            left, top = max(0, int(min(xs))), max(0, int(min(ys)))
-            right, bottom = min(width, int(max(xs))), min(height, int(max(ys)))
-            face = {
-                "x": left,
-                "y": top,
-                "width": max(0, right - left),
-                "height": max(0, bottom - top),
-            }
-            left_ear = eye_aspect_ratio(points, LEFT_EYE)
-            right_ear = eye_aspect_ratio(points, RIGHT_EYE)
-            if left_ear is not None and right_ear is not None:
-                blink_detected = self.blinks.update(left_ear, right_ear, now)
-            ratio = mouth_aspect_ratio(points)
-            if ratio is not None:
-                mouth_open = self.mouth.update(
-                    ratio >= MOUTH_OPEN_THRESHOLD
-                    if not self.mouth.value
-                    else False if ratio <= MOUTH_CLOSED_THRESHOLD else None
-                )
-        else:
+        result = self.mesh.process(rgb)
+        faces = result.multi_face_landmarks or []
+        face_count = len(faces)
+        analysis = {
+            "face_count": face_count,
+            "face": None,
+            "blink": {"detected": False, "count": self.blinks.count},
+            "gaze": "UNKNOWN",
+            "head": None,
+        }
+        if face_count != 1:
             self.blinks.closed_since = None
+            return analysis
 
-        raised = hand_above_shoulder(
-            result.pose_landmarks,
-            self.hand_raised.value,
-        )
-        raised_state = self.hand_raised.update(raised)
-        hands = {}
-        for side, landmarks in (
-            ("left", result.left_hand_landmarks),
-            ("right", result.right_hand_landmarks),
-        ):
-            if landmarks is None:
-                self.hand_shapes[side].reset()
-            else:
-                hands[side] = self.hand_shapes[side].update(
-                    classify_hand_shape(landmarks)
-                )
-
-        return {
-            "face": face,
-            "blink": {"detected": blink_detected, "count": self.blinks.count},
-            "mouth": (
-                "OPEN" if mouth_open else "CLOSED"
-            ) if mouth_open is not None else None,
-            "hand_raised": raised_state if raised is not None else None,
-            "hands": hands,
+        landmarks = faces[0].landmark
+        points = [(landmark.x * width, landmark.y * height) for landmark in landmarks]
+        xs, ys = zip(*points)
+        left, top = max(0, int(min(xs))), max(0, int(min(ys)))
+        right, bottom = min(width, int(max(xs))), min(height, int(max(ys)))
+        analysis["face"] = {
+            "x": left,
+            "y": top,
+            "width": max(0, right - left),
+            "height": max(0, bottom - top),
         }
 
+        left_ear = eye_aspect_ratio(points, LEFT_EYE)
+        right_ear = eye_aspect_ratio(points, RIGHT_EYE)
+        if left_ear is not None and right_ear is not None:
+            blink_detected = self.blinks.update(
+                left_ear,
+                right_ear,
+                time.monotonic(),
+            )
+            analysis["blink"] = {
+                "detected": blink_detected,
+                "count": self.blinks.count,
+            }
+        analysis["gaze"] = classify_gaze(points)
+        analysis["head"] = head_pose(points, width, height)
+        return analysis
+
     def close(self):
-        self.holistic.close()
+        self.mesh.close()
 
 
 @sock.route("/ws", bp=face_blueprint)
-def stream_gestures(ws):
+def stream_faces(ws):
     origin = request.headers.get("Origin")
     if (
         origin
@@ -291,7 +245,7 @@ def stream_gestures(ws):
         ws.close(1008, "Origin not allowed")
         return
 
-    analyzer = GestureAnalyzer()
+    analyzer = FaceAnalyzer()
     try:
         while True:
             message = ws.receive()
@@ -300,7 +254,7 @@ def stream_gestures(ws):
             if not isinstance(message, bytes) or not message:
                 ws.send(json.dumps({
                     "status": "ERROR",
-                    "message": "Expected a binary JPEG frame",
+                    "message": "Expected a binary JPEG video frame",
                 }))
                 continue
             if len(message) > MAX_FRAME_BYTES:
@@ -319,23 +273,29 @@ def stream_gestures(ws):
             if frame is None:
                 ws.send(json.dumps({
                     "status": "ERROR",
-                    "message": "Invalid image frame",
+                    "message": "Invalid video frame",
                 }))
                 continue
 
             analysis = analyzer.analyze(frame)
-            face = analysis["face"]
+            face_count = analysis["face_count"]
+            status = "SUCCESS" if face_count == 1 else (
+                "MULTIPLE" if face_count > 1 else "FAILED"
+            )
+            if face_count == 1:
+                message_text = "Exactly one person detected"
+            elif face_count > 1:
+                message_text = "Only one person may be in the camera"
+            else:
+                message_text = "No person detected"
             ws.send(json.dumps({
-                "status": "SUCCESS" if face is not None else "FAILED",
-                "message": (
-                    "Human face detected" if face is not None else "No face detected"
-                ),
-                "face": face,
+                "status": status,
+                "message": message_text,
+                "face_count": face_count,
+                "face": analysis["face"],
                 "blink": analysis["blink"],
-                "mouth": analysis["mouth"],
-                "hand_raised": analysis["hand_raised"],
-                "hands": analysis["hands"],
-                "hands_visible": bool(analysis["hands"]),
+                "gaze": analysis["gaze"],
+                "head": analysis["head"],
             }))
     finally:
         analyzer.close()

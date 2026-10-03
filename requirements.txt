@@ -15,3 +15,7 @@ soundfile
 speechbrain
 python-dotenv
 rapidocr-onnxruntime
+rapidfuzz
+requests
+web3>=6,<9
+py-solc-x>=2,<3
