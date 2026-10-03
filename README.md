@@ -1,30 +1,58 @@
-# Human Face Detection API
+# Face and Gesture Detection
 
-This Flask service detects faces in uploaded images using InsightFace's `buffalo_l` detector. It also serves a webcam test page at `/`. It detects faces only; it does not identify or verify a person's identity.
+This Flask service uses MediaPipe Holistic to detect a face, eye blinks, mouth open/closed state, raised hands, and visible-hand open/closed shapes. It serves the webcam tester at `/`.
 
 ## Run the service
 
-Install dependencies with `pip install -r requirements.txt`, then run `python app.py`. On first start, InsightFace downloads the `buffalo_l` model pack into its model cache. For a production WSGI server on Linux, use one worker and a small thread pool:
+Install dependencies with `pip install -r requirements.txt`, then run `python app.py`. The webcam tester and service should be opened from the same host over HTTPS in production so the browser can grant camera access.
+
+For a production WSGI server on Linux, use a threaded worker so WebSocket connections remain open:
 
 ```bash
-gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 60 app:app
+gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 60 app:app
 ```
 
-One worker avoids loading a separate copy of the model for each process. Inference is serialized within that process to limit CPU use, while up to four requests can be handled concurrently. Set `ONNX_INTRA_OP_THREADS` to change the ONNX Runtime CPU thread count; it defaults to `1`.
+Each connected WebSocket creates a detector instance and retains gesture state for that connection. Keep the worker count low to avoid loading duplicate models into memory.
 
-## API
+The service requires separate PostgreSQL settings: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Set them in the environment or `.env` file using the direct Supabase connection details. It does not fall back to SQLite; startup fails with a clear error if the database cannot be reached. Startup also adds the nullable `profile.identity_document_hash` column to an existing PostgreSQL profile table when needed.
 
-`POST /verify-stream` accepts one image as multipart form data under the `image` field.
+## WebSocket stream
 
-```bash
-curl -X POST "https://YOUR-HOST/verify-stream" \
-  -F "image=@frame.jpg"
+Connect to `/face/ws` using `ws://` locally or `wss://` over HTTPS. Send each camera frame as a binary JPEG message over that persistent WebSocket; the webcam page sends frames approximately every 150 ms. The server replies with one JSON message per processed frame:
+
+```json
+{
+  "status": "SUCCESS",
+  "message": "Human face detected",
+  "face": {"x": 100, "y": 40, "width": 240, "height": 300},
+  "blink": {"detected": false, "count": 2},
+  "mouth": "CLOSED",
+  "hand_raised": false,
+  "hands": {"right": "OPEN"},
+  "hands_visible": true
+}
 ```
 
-The endpoint accepts each video frame as a separate request, so clients can stream by sending JPEG frames repeatedly. The response is JSON. `status` is `SUCCESS` when a face is detected, or `FAILED` otherwise; a successful response includes the largest face's bounding box and detection confidence. Invalid or missing images return an HTTP 400 response. `GET /health` returns `{"status":"ok"}` when the service is available.
+`status` is `FAILED` when no face is detected. `mouth` and `hand_raised` are `null` when their landmarks are unavailable. `hands` contains only hands visible in that frame. Text or invalid image messages return an `ERROR` response. Frames larger than 8 MiB are rejected.
 
-The service also serves a webcam tester at `/`. Open it over HTTPS and allow camera access.
+`GET /health` returns `{"status":"ok"}`. Set `CORS_ORIGINS` to a comma-separated list of allowed browser origins; it defaults to `*`.
 
-Set `CORS_ORIGINS` to a comma-separated list of allowed origins when calling the API from another website. It defaults to `*`. Set `MAX_UPLOAD_BYTES` to change the maximum image upload size; the default is 8 MiB.
+## Voice comparison WebSocket
 
-The InsightFace model pack is published for non-commercial research use. Confirm its license is suitable for your use before deploying it commercially.
+Connect to `/human/ws` and send one JSON text message with exactly five base64-encoded WAV recordings in a `voices` array:
+
+The home page has separate face and voice panels. The voice panel randomly selects five different reading prompts, records them one at a time from the microphone (up to 15 seconds each), and sends them for comparison once all five are recorded.
+
+```json
+{
+  "voices": [
+    "<base64 WAV recording 1>",
+    "<base64 WAV recording 2>",
+    "<base64 WAV recording 3>",
+    "<base64 WAV recording 4>",
+    "<base64 WAV recording 5>"
+  ]
+}
+```
+
+The response is a compact JSON verdict: `{"result":"Similar"}` when every unique voice pair scores above `0.25`, otherwise `{"result":"Different"}`. Each request message is limited to 32 MiB. Invalid JSON, recording counts, base64 data, or WAV audio return a JSON `ERROR` response. Voice comparison uses the ECAPA-TDNN model and its dependencies, installed with `pip install -r requirements.txt`.

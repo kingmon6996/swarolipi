@@ -3,23 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Human Verification Stream</title>
+    <title>Human Verification</title>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            background: #121212;
+            color: #fff;
             margin: 0;
+            padding: 32px 20px;
         }
-        h1 { margin-bottom: 10px; font-weight: 400; color: #e0e0e0; }
-        .container { position: relative; width: 640px; height: 480px; background: #1e1e1e; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-        video { display: none; } /* Kept hidden, canvas handles the display loop */
+        h1 { text-align: center; margin: 0 0 28px; font-weight: 400; color: #e0e0e0; }
+        h2 { margin-top: 0; font-weight: 500; }
+        .sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 24px; max-width: 1200px; margin: auto; }
+        .section { min-width: 0; padding: 22px; background: #1b1b1b; border: 1px solid #333; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+        .camera-container { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #111; border-radius: 10px; overflow: hidden; }
+        video { display: none; }
         canvas { width: 100%; height: 100%; object-fit: cover; }
+        .gesture-panel {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
         .status-overlay {
             position: absolute;
             bottom: 20px;
@@ -37,97 +49,437 @@
         .status-searching { background-color: #ff9800; color: #000; }
         .status-human { background-color: #4caf50; color: #fff; }
         .status-fail { background-color: #f44336; color: #fff; }
+        .voice-help { color: #bbb; line-height: 1.5; }
+        .prompt-card { padding: 18px; margin: 18px 0; background: #252525; border-radius: 8px; }
+        .prompt-text { min-height: 54px; font-size: 1.2rem; line-height: 1.5; }
+        .voice-controls { display: flex; flex-wrap: wrap; gap: 10px; }
+        button { padding: 10px 16px; border: 0; border-radius: 6px; background: #5c6bc0; color: #fff; font-size: 1rem; cursor: pointer; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        button.recording { background: #d84343; }
+        .voice-status { min-height: 24px; margin-top: 12px; color: #ddd; }
+        .recording-list { padding-left: 22px; color: #bbb; line-height: 1.7; }
+        .result { overflow-x: auto; margin-top: 18px; }
+        .result table { border-collapse: collapse; width: 100%; }
+        .result th, .result td { border: 1px solid #444; padding: 8px; text-align: center; }
+        .result th { background: #292929; }
+        .result ul { padding-left: 22px; line-height: 1.6; }
+        @media (max-width: 540px) {
+            body { padding: 18px 12px; }
+            .section { padding: 16px; }
+            .status-overlay { bottom: 12px; padding: 9px 14px; font-size: .9rem; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>Live Human Verification</h1>
-    <div class="container">
-        <video id="webcam" autoplay playsinline width="640" height="480"></video>
-        <canvas id="outputCanvas"></canvas>
-        <div id="statusLabel" class="status-overlay status-searching">Initializing Camera...</div>
-    </div>
+    <h1>Human Verification</h1>
+    <main class="sections">
+        <section class="section" aria-labelledby="faceHeading">
+            <h2 id="faceHeading">Face check</h2>
+            <div class="camera-container">
+                <video id="webcam" autoplay playsinline width="640" height="480"></video>
+                <canvas id="outputCanvas"></canvas>
+                <div id="gesturePanel" class="gesture-panel">Connecting to detector...</div>
+                <div id="statusLabel" class="status-overlay status-searching">Initializing camera...</div>
+            </div>
+        </section>
+
+        <section class="section" aria-labelledby="voiceHeading">
+            <h2 id="voiceHeading">Voice check</h2>
+            <p class="voice-help">Read each randomly selected text aloud and record all five prompts. Once all five are recorded, compare their voices.</p>
+            <div class="prompt-card">
+                <div id="promptCounter">Prompt 1 of 5</div>
+                <p id="promptText" class="prompt-text"></p>
+                <div class="voice-controls">
+                    <button id="recordButton" type="button">Start recording</button>
+                    <button id="stopButton" type="button" disabled>Stop recording</button>
+                    <button id="restartButton" type="button">Start over</button>
+                </div>
+            </div>
+            <ol id="recordingList" class="recording-list"></ol>
+            <button id="compareButton" type="button" disabled>Compare five recordings</button>
+            <div id="voiceStatus" class="voice-status" role="status" aria-live="polite"></div>
+            <div id="voiceResult" class="result"></div>
+        </section>
+    </main>
 
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('outputCanvas');
         const ctx = canvas.getContext('2d');
         const statusLabel = document.getElementById('statusLabel');
+        const gesturePanel = document.getElementById('gesturePanel');
 
-        // Set explicit processing canvas metrics
         canvas.width = 640;
         canvas.height = 480;
 
-        // Change this URL to your deployed Hugging Face space endpoint when live
-        // Example: "https://hf.space"
-        const API_URL = "/verify-stream"; 
+        const FRAME_INTERVAL_MS = 150;
+        const MAX_BUFFERED_BYTES = 1024 * 1024;
+        let faceSocket = null;
+        let frameTimer = null;
+        let encodingFrame = false;
 
-        // 1. Request access to the webcam stream
         navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false })
             .then(stream => {
                 video.srcObject = stream;
-                statusLabel.innerText = "Scanning for Human...";
-                statusLabel.className = "status-overlay status-searching";
-                
-                // Start drawing locally right away
-                requestAnimationFrame(renderLoop);
-                // Start API polling cycle every 400ms to preserve server CPU limits
-                setInterval(sendFrameToAPI, 400);
+                video.onloadeddata = () => requestAnimationFrame(renderLoop);
+                connectFaceWebSocket();
             })
             .catch(err => {
-                console.error("Webcam blocked or unavailable: ", err);
-                statusLabel.innerText = "Camera Access Denied";
+                console.error("Webcam blocked or unavailable:", err);
+                statusLabel.innerText = "Camera access denied";
                 statusLabel.className = "status-overlay status-fail";
             });
 
-        // 2. Render the local camera frame cleanly onto the canvas
         function renderLoop() {
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             requestAnimationFrame(renderLoop);
         }
 
-        // 3. Grab canvas state, convert to JPEG blob, and send to the Flask API
-        let requestInProgress = false;
+        function connectFaceWebSocket() {
+            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            faceSocket = new WebSocket(`${protocol}//${location.host}/face/ws`);
 
-        function sendFrameToAPI() {
-            if (requestInProgress) return;
-            requestInProgress = true;
+            faceSocket.onopen = () => {
+                statusLabel.innerText = "Streaming to detector...";
+                gesturePanel.innerText = "Waiting for detection...";
+                frameTimer = setInterval(sendFrame, FRAME_INTERVAL_MS);
+            };
 
-            canvas.toBlob((blob) => {
-                if (!blob) {
-                    requestInProgress = false;
+            faceSocket.onmessage = event => {
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch (err) {
+                    console.error("Invalid detector response:", err);
                     return;
                 }
+                if (data.status === "ERROR") {
+                    gesturePanel.innerText = data.message || "Detector error";
+                    return;
+                }
+                statusLabel.innerText = data.status === "SUCCESS"
+                    ? "✓ HUMAN DETECTED"
+                    : "Scanning for human...";
+                statusLabel.className = data.status === "SUCCESS"
+                    ? "status-overlay status-human"
+                    : "status-overlay status-searching";
 
-                const formData = new FormData();
-                formData.append('image', blob, 'frame.jpg');
+                const hands = Object.entries(data.hands || {})
+                    .map(([side, shape]) => `${side}: ${shape}`)
+                    .join(" | ") || "None";
+                gesturePanel.innerText = [
+                    `Blinks: ${data.blink?.count ?? 0}${data.blink?.detected ? " (blink)" : ""}`,
+                    `Mouth: ${data.mouth ?? "Not detected"}`,
+                    `Hand raised: ${data.hand_raised === null ? "Unknown" : data.hand_raised ? "Yes" : "No"}`,
+                    `Hands visible: ${data.hands_visible ? hands : "No"}`,
+                ].join("\n");
+            };
 
-                fetch(API_URL, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Update UI text and classes dynamically based on API validation feedback
-                    if (data.status === "SUCCESS") {
-                        statusLabel.innerText = "✓ HUMAN VERIFIED";
-                        statusLabel.className = "status-overlay status-human";
-                    } else if (data.status === "FAILED") {
-                        statusLabel.innerText = "✖ NOT A HUMAN / BLOCKED FACE";
-                        statusLabel.className = "status-overlay status-fail";
-                    } else {
-                        statusLabel.innerText = "Scanning for Human...";
-                        statusLabel.className = "status-overlay status-searching";
-                    }
-                })
-                .catch(err => {
-                    console.error("API Communication error:", err);
-                })
-                .finally(() => {
-                    requestInProgress = false;
-                });
-            }, 'image/jpeg', 0.7); // 0.7 quality factor keeps data payloads small and transfers fast
+            faceSocket.onerror = err => {
+                console.error("Face WebSocket connection error:", err);
+                statusLabel.innerText = "Detector connection error";
+                statusLabel.className = "status-overlay status-fail";
+            };
+            faceSocket.onclose = () => {
+                if (frameTimer !== null) {
+                    clearInterval(frameTimer);
+                    frameTimer = null;
+                }
+                statusLabel.innerText = "Detector disconnected";
+                statusLabel.className = "status-overlay status-fail";
+                gesturePanel.innerText = "WebSocket disconnected";
+            };
         }
+
+        function sendFrame() {
+            if (faceSocket.readyState !== WebSocket.OPEN ||
+                video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
+                faceSocket.bufferedAmount > MAX_BUFFERED_BYTES ||
+                encodingFrame) {
+                return;
+            }
+            encodingFrame = true;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                encodingFrame = false;
+                if (blob && faceSocket.readyState === WebSocket.OPEN &&
+                    faceSocket.bufferedAmount <= MAX_BUFFERED_BYTES) {
+                    faceSocket.send(blob);
+                }
+            }, 'image/jpeg', 0.7);
+        }
+
+        const promptOptions = [
+            "The quick brown fox jumps over the lazy dog.",
+            "Please bring the blue notebook to the front desk.",
+            "A little kindness can make a very big difference.",
+            "Today is a good day to learn something new.",
+            "Seven silver stars shine softly in the evening sky.",
+            "My favorite place is somewhere peaceful and quiet.",
+            "Fresh green leaves move gently in the morning breeze.",
+            "We will meet again after the final song.",
+            "Careful preparation helps every project succeed.",
+            "Bright colors filled the room with cheerful energy.",
+            "The train arrived just before the rain began.",
+            "Small steps can lead to wonderful discoveries."
+        ];
+        const voiceCount = 5;
+        const maxRecordingMs = 15000;
+        const promptText = document.getElementById('promptText');
+        const promptCounter = document.getElementById('promptCounter');
+        const recordButton = document.getElementById('recordButton');
+        const stopButton = document.getElementById('stopButton');
+        const restartButton = document.getElementById('restartButton');
+        const compareButton = document.getElementById('compareButton');
+        const recordingList = document.getElementById('recordingList');
+        const voiceStatus = document.getElementById('voiceStatus');
+        const voiceResult = document.getElementById('voiceResult');
+        let prompts = [];
+        let recordings = [];
+        let audioStream = null;
+        let audioContext = null;
+        let processor = null;
+        let source = null;
+        let muteNode = null;
+        let audioChunks = [];
+        let recordingTimer = null;
+        let isRecording = false;
+        let voiceSocket = null;
+        let voiceConnectionOpened = false;
+        let voiceResponseReceived = false;
+
+        function selectPrompts() {
+            const shuffled = [...promptOptions].sort(() => Math.random() - 0.5);
+            prompts = shuffled.slice(0, voiceCount);
+            recordings = [];
+            renderPrompt();
+            renderRecordingList();
+            compareButton.disabled = true;
+            voiceResult.replaceChildren();
+            voiceStatus.textContent = "Allow microphone access when your browser asks.";
+        }
+
+        function renderPrompt() {
+            if (recordings.length >= voiceCount) {
+                promptCounter.textContent = "All five prompts recorded";
+                promptText.textContent = "Ready to compare the recordings.";
+                recordButton.disabled = true;
+                stopButton.disabled = true;
+                return;
+            }
+            promptCounter.textContent = `Prompt ${recordings.length + 1} of ${voiceCount}`;
+            promptText.textContent = prompts[recordings.length];
+            recordButton.disabled = isRecording;
+            stopButton.disabled = !isRecording;
+        }
+
+        function renderRecordingList() {
+            recordingList.replaceChildren();
+            recordings.forEach((recording, index) => {
+                const item = document.createElement('li');
+                item.textContent = `Prompt ${index + 1}: recorded (${(recording.size / 1024).toFixed(1)} KB)`;
+                recordingList.append(item);
+            });
+        }
+
+        async function startRecording() {
+            try {
+                if (!audioStream) {
+                    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
+                audioContext = new AudioContext();
+                source = audioContext.createMediaStreamSource(audioStream);
+                processor = audioContext.createScriptProcessor(4096, 1, 1);
+                muteNode = audioContext.createGain();
+                muteNode.gain.value = 0;
+                audioChunks = [];
+                processor.onaudioprocess = event => {
+                    if (isRecording) {
+                        audioChunks.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+                    }
+                };
+                source.connect(processor);
+                processor.connect(muteNode);
+                muteNode.connect(audioContext.destination);
+                await audioContext.resume();
+                isRecording = true;
+                recordButton.classList.add('recording');
+                recordButton.textContent = "Recording...";
+                restartButton.disabled = true;
+                voiceStatus.textContent = "Recording. Read the text aloud, then stop (maximum 15 seconds).";
+                renderPrompt();
+                recordingTimer = setTimeout(stopRecording, maxRecordingMs);
+            } catch (error) {
+                console.error("Microphone unavailable:", error);
+                voiceStatus.textContent = "Could not access the microphone. Check browser permissions and try again.";
+            }
+        }
+
+        async function stopRecording() {
+            if (!isRecording) return;
+            isRecording = false;
+            clearTimeout(recordingTimer);
+            recordingTimer = null;
+            processor.disconnect();
+            source.disconnect();
+            muteNode.disconnect();
+            const sampleRate = audioContext.sampleRate;
+            await audioContext.close();
+            processor = null;
+            source = null;
+            muteNode = null;
+            audioContext = null;
+            recordButton.classList.remove('recording');
+            recordButton.textContent = "Start recording";
+            restartButton.disabled = false;
+
+            const wavBlob = encodeWav(audioChunks, sampleRate);
+            audioChunks = [];
+            if (wavBlob.size < 48) {
+                voiceStatus.textContent = "Recording was too short. Record that prompt again.";
+                renderPrompt();
+                return;
+            }
+            recordings.push(wavBlob);
+            renderRecordingList();
+            renderPrompt();
+            compareButton.disabled = recordings.length !== voiceCount;
+            voiceStatus.textContent = recordings.length === voiceCount
+                ? "Five recordings are ready to compare."
+                : "Recording saved. Continue with the next text.";
+        }
+
+        function encodeWav(chunks, sampleRate) {
+            const sampleCount = chunks.reduce((total, chunk) => total + chunk.length, 0);
+            const buffer = new ArrayBuffer(44 + sampleCount * 2);
+            const view = new DataView(buffer);
+            const writeString = (offset, text) => {
+                for (let index = 0; index < text.length; index++) {
+                    view.setUint8(offset + index, text.charCodeAt(index));
+                }
+            };
+            writeString(0, "RIFF");
+            view.setUint32(4, 36 + sampleCount * 2, true);
+            writeString(8, "WAVE");
+            writeString(12, "fmt ");
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, "data");
+            view.setUint32(40, sampleCount * 2, true);
+
+            let offset = 44;
+            chunks.forEach(chunk => {
+                for (let index = 0; index < chunk.length; index++, offset += 2) {
+                    const sample = Math.max(-1, Math.min(1, chunk[index]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+                }
+            });
+            return new Blob([buffer], { type: "audio/wav" });
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function compareRecordings() {
+            compareButton.disabled = true;
+            voiceStatus.textContent = "Connecting to voice comparison...";
+            voiceResult.replaceChildren();
+            try {
+                const voices = await Promise.all(recordings.map(blobToBase64));
+                const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+                voiceSocket = new WebSocket(`${protocol}//${location.host}/human/ws`);
+                voiceConnectionOpened = false;
+                voiceResponseReceived = false;
+                voiceSocket.onopen = () => {
+                    voiceConnectionOpened = true;
+                    voiceSocket.send(JSON.stringify({ voices }));
+                    voiceStatus.textContent = "Comparing recordings. This may take a moment...";
+                };
+                voiceSocket.onmessage = event => {
+                    let result;
+                    try {
+                        result = JSON.parse(event.data);
+                    } catch (error) {
+                        console.error("Invalid voice comparison response:", error);
+                        voiceStatus.textContent = "The server returned an invalid response.";
+                        voiceResponseReceived = true;
+                        compareButton.disabled = false;
+                        voiceSocket.close();
+                        return;
+                    }
+                    voiceResponseReceived = true;
+                    if (result.result === "Similar" || result.result === "Different") {
+                        renderVoiceResult(result);
+                        voiceStatus.textContent = "Voice comparison complete.";
+                        voiceSocket.close();
+                        return;
+                    }
+                    if (result.status === "ERROR") {
+                        voiceStatus.textContent = result.message || "Voice comparison failed.";
+                        compareButton.disabled = false;
+                        voiceSocket.close();
+                        return;
+                    }
+                    voiceStatus.textContent = "The server returned an unrecognized comparison response. Please try again.";
+                    compareButton.disabled = false;
+                    voiceSocket.close();
+                };
+                voiceSocket.onerror = error => {
+                    console.error("Voice WebSocket error:", error);
+                    if (!voiceResponseReceived) {
+                        voiceStatus.textContent = "Voice WebSocket network error; checking connection close details...";
+                    }
+                };
+                voiceSocket.onclose = event => {
+                    voiceSocket = null;
+                    if (recordings.length === voiceCount) compareButton.disabled = false;
+                    if (!voiceResponseReceived) {
+                        const details = `Close code ${event.code}${event.reason ? `: ${event.reason}` : ""}.`;
+                        voiceStatus.textContent = voiceConnectionOpened
+                            ? `Voice comparison connection closed before returning a result. ${details} Check the server logs and voice dependencies.`
+                            : `Could not open the voice comparison WebSocket. ${details} Confirm this server has the latest app and that its host/proxy supports WebSockets at /human/ws.`;
+                    }
+                };
+            } catch (error) {
+                console.error("Could not send voice recordings:", error);
+                voiceStatus.textContent = "Could not prepare recordings for comparison.";
+                compareButton.disabled = false;
+            }
+        }
+
+        function renderVoiceResult(result) {
+            const verdict = document.createElement('h3');
+            verdict.textContent = result.result;
+            voiceResult.replaceChildren(verdict);
+        }
+
+        recordButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+        restartButton.addEventListener('click', () => {
+            selectPrompts();
+        });
+        compareButton.addEventListener('click', compareRecordings);
+        selectPrompts();
+
+        window.addEventListener('beforeunload', () => {
+            if (frameTimer !== null) clearInterval(frameTimer);
+            if (faceSocket && faceSocket.readyState < WebSocket.CLOSING) faceSocket.close();
+            if (voiceSocket && voiceSocket.readyState < WebSocket.CLOSING) voiceSocket.close();
+            if (audioStream) audioStream.getTracks().forEach(track => track.stop());
+            if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
+        });
     </script>
 </body>
 </html>
