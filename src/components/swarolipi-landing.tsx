@@ -365,7 +365,7 @@ export function SwarolipiLanding() {
             {/* Drawer Header */}
             <div className="flex items-center justify-between border-b border-purple-500/15 pb-6">
               <a href="#top" onClick={(e) => { closeDrawer(); handleScrollToTop(e); }} className="flex items-center gap-2">
-                <img src="/brand.png" alt="Swarolipi" className="h-10 w-auto object-contain" />
+                <img src="/brand.png" alt="Swarolipi" className="h-35 w-auto object-contain" />
               </a>
               <Button
                 variant="ghost"
@@ -374,7 +374,7 @@ export function SwarolipiLanding() {
                 className="rounded-full border border-purple-500/20 text-muted-foreground hover:bg-purple-950/40 hover:text-foreground"
                 aria-label="Close menu"
               >
-                <X className="size-5" />
+                <X className="size-1" />
               </Button>
             </div>
 
@@ -568,6 +568,7 @@ export function SwarolipiLanding() {
                   distance={35}
                 >
                   <motion.article
+                    data-no-cursor="true"
                     whileHover={reduced ? {} : { y: -8 }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="group relative h-full overflow-hidden rounded-2xl border border-purple-500/15 bg-card/60 backdrop-blur-xl p-7 shadow-sm transition-all duration-300 hover:border-purple-500/40 hover:bg-card/85 hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.25)] sm:p-9"
@@ -637,6 +638,7 @@ export function SwarolipiLanding() {
               return (
                 <ScrollReveal key={pt.title} direction="up" delay={i * 0.1} distance={30}>
                   <motion.div
+                    data-no-cursor="true"
                     whileHover={reduced ? {} : { y: -8 }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="group relative h-full overflow-hidden rounded-2xl border border-purple-500/15 bg-card/60 backdrop-blur-xl p-6 shadow-sm transition-all duration-300 hover:border-purple-500/40 hover:bg-card/85 hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.25)]"
