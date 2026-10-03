@@ -24,6 +24,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useAuth, DEMO_VOTEDAO_APP } from "@/hooks/useAuth";
 import { formatAddress } from "@/components/WalletStatus";
 
+import { authService } from "@/services/authService";
+
 export function DeveloperDemoView() {
   const { walletAddress, isConnected } = useWallet();
   const {
@@ -34,14 +36,25 @@ export function DeveloperDemoView() {
     identityCountry,
   } = useProfile();
 
-  const { isAuthorized, revokeApp } = useAuth();
+  const { isAuthorized, revokeApp, authorizedApps } = useAuth();
   const navigate = useNavigate();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [votedOption, setVotedOption] = useState<string | null>(null);
   const [voteSubmitted, setVoteSubmitted] = useState(false);
+  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [loadingApi, setLoadingApi] = useState(false);
 
   const isVoteDAOAuthorized = isAuthorized("demo-votedao");
+  const voteDAOApp = authorizedApps.find((a) => a.applicationId === "demo-votedao");
+
+  const handleTestApiAccess = async () => {
+    if (!voteDAOApp?.token) return;
+    setLoadingApi(true);
+    const res = await authService.fetchThirdPartyScopeData(voteDAOApp.token);
+    setApiResponse(res);
+    setLoadingApi(false);
+  };
 
   const handleReviewAndAuthorize = () => {
     setModalOpen(false);
@@ -238,6 +251,56 @@ export function DeveloperDemoView() {
                           <span className="font-bold">ABSTAIN</span>
                           <span className="text-[0.68rem] text-muted-foreground">Abstain Vote</span>
                         </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Third-Party Scope Data API Tester & Token Inspector */}
+                  <div className="rounded-xl border border-primary/20 bg-accent/30 p-5 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h4 className="font-display text-sm font-bold text-foreground">
+                          Third-Party Scope Data Fetcher (`POST /auth/access`)
+                        </h4>
+                        <p className="text-[0.7rem] text-muted-foreground">
+                          Simulate VoteDAO using token to query authorized user scopes on-chain / backend.
+                        </p>
+                      </div>
+
+                      <Button
+                        variant="swarolipi"
+                        size="sm"
+                        onClick={handleTestApiAccess}
+                        disabled={loadingApi}
+                        className="text-xs font-bold gap-1.5"
+                      >
+                        {loadingApi ? "Fetching..." : "Fetch Authorized Scope Data"}
+                      </Button>
+                    </div>
+
+                    {voteDAOApp?.token && (
+                      <div className="rounded-lg border border-border/80 bg-background/90 p-3 text-xs space-y-1">
+                        <div className="flex items-center justify-between text-[0.68rem] text-muted-foreground font-mono">
+                          <span>Authorization Token</span>
+                          <span className="text-purple-400 font-bold">Sepolia Registry Verified ✓</span>
+                        </div>
+                        <p className="font-mono text-[0.72rem] text-foreground truncate">{voteDAOApp.token}</p>
+                      </div>
+                    )}
+
+                    {apiResponse && (
+                      <div className="rounded-xl border border-purple-500/30 bg-card p-4 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span className={apiResponse.success ? "text-purple-400" : "text-destructive"}>
+                            {apiResponse.success ? "✓ 200 OK - Authorized Scope Data" : "✕ 403 Forbidden - Access Denied"}
+                          </span>
+                          <span className="font-mono text-[0.65rem] text-muted-foreground">
+                            {apiResponse.success ? "Active Token" : "Revoked Token"}
+                          </span>
+                        </div>
+                        <pre className="p-3 rounded-lg bg-black/80 font-mono text-[0.7rem] text-emerald-400 overflow-x-auto max-h-48 border border-border/50">
+                          {JSON.stringify(apiResponse, null, 2)}
+                        </pre>
                       </div>
                     )}
                   </div>

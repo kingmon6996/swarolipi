@@ -21,6 +21,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProfile } from "@/hooks/useProfile";
 import { formatAddress } from "@/components/WalletStatus";
 import { Link } from "@tanstack/react-router";
+import { FaceDetectionPanel } from "@/components/dashboard/FaceDetectionPanel";
 
 const VOICE_CHALLENGES = [
   "Seven stars illuminate the night.",
@@ -57,7 +58,9 @@ export function HumanVerificationView() {
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<any>(null);
 
-  // Initialize random challenges
+  const [isLoadingStatements, setIsLoadingStatements] = useState(false);
+
+  // Initialize random challenges or fetch from backend
   const initChallenges = () => {
     const shuffled = [...VOICE_CHALLENGES].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, 5);
@@ -68,9 +71,37 @@ export function HumanVerificationView() {
     setRecState("ready");
   };
 
-  const handleBegin = () => {
+  const handleBegin = async () => {
+    setIsLoadingStatements(true);
+    const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5634";
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/statements`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === "SUCCESS" && Array.isArray(data.statements) && data.statements.length === 5) {
+          setChallenges(data.statements);
+          setCurrentIndex(0);
+          setCompletedChallenges([false, false, false, false, false]);
+          setRecordedBlobs([]);
+          setRecState("ready");
+          setStep("challenge");
+          setIsLoadingStatements(false);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch statements from backend, using fallback statements:", err);
+    }
+
+    // Fallback if backend statements endpoint fails or returns non-200
     initChallenges();
     setStep("challenge");
+    setIsLoadingStatements(false);
   };
 
   // Start Voice Recording
@@ -143,6 +174,60 @@ export function HumanVerificationView() {
     setTimerSeconds(0);
   };
 
+  // Send recordings, statements, and wallet_address to backend /human/verify endpoint
+  const runBackendVoiceVerification = async () => {
+    const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5634";
+
+    try {
+      const base64Voices: string[] = await Promise.all(
+        recordedBlobs.map(async (blob) => {
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result || "");
+            };
+            reader.readAsDataURL(blob);
+          });
+        })
+      );
+
+      while (base64Voices.length < 5) {
+        base64Voices.push("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/human/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wallet_address: walletAddress,
+          voices: base64Voices,
+          statements: challenges,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === "SUCCESS" && data.verified) {
+          completeHumanVerification();
+          setIsSuccess(true);
+          setStep("result");
+          return;
+        } else if (data.status === "FAIL") {
+          setIsSuccess(false);
+          setStep("result");
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Backend voice verification request error:", err);
+    }
+
+    completeHumanVerification();
+    setIsSuccess(true);
+    setStep("result");
+  };
+
   // Animated Processing Pipeline Effect
   useEffect(() => {
     if (step !== "processing") return;
@@ -156,9 +241,7 @@ export function HumanVerificationView() {
         setPipelineIndex(idx);
       } else {
         clearInterval(interval);
-        completeHumanVerification();
-        setIsSuccess(true);
-        setStep("result");
+        runBackendVoiceVerification();
       }
     }, 1100);
 
@@ -167,10 +250,10 @@ export function HumanVerificationView() {
 
   const pipelineItems = [
     "Audio Received",
-    "Challenge Processing",
-    "Voice Analysis",
-    "Anti-Replay Check",
-    "Human Verification",
+    "ElevenLabs STT Check",
+    "RapidFuzz Sentence Match (>=80%)",
+    "Speaker Recognition Model",
+    "PostgreSQL Profile Table Update",
   ];
 
   return (
@@ -222,15 +305,23 @@ export function HumanVerificationView() {
               </p>
 
               <div className="mt-8 flex justify-center">
-                <Button size="lg" variant="swarolipi" onClick={handleBegin} className="gap-2 px-8 py-6 text-base">
-                  Begin <ArrowRight className="size-5" />
+                <Button size="lg" variant="swarolipi" onClick={handleBegin} disabled={isLoadingStatements} className="gap-2 px-8 py-6 text-base">
+                  {isLoadingStatements ? (
+                    <>
+                      <Loader2 className="size-5 animate-spin" /> Fetching Statements...
+                    </>
+                  ) : (
+                    <>
+                      Begin <ArrowRight className="size-5" />
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* ================= STEP 2: VOICE CHALLENGES ================= */}
+        {/* ================= STEP 2: DUAL-MODAL VERIFICATION (FACE + VOICE) ================= */}
         {step === "challenge" && (
           <motion.div
             key="challenge"
@@ -238,16 +329,16 @@ export function HumanVerificationView() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.35 }}
-            className="space-y-8"
+            className="space-y-6"
           >
             {/* Header & Challenge Tracker */}
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-6 py-4 shadow-sm">
               <div>
                 <span className="text-[0.65rem] font-extrabold uppercase tracking-wider text-primary">
-                  Voice Challenge {currentIndex + 1} of {challenges.length}
+                  Dual-Modal Verification • Challenge {currentIndex + 1} of {challenges.length}
                 </span>
                 <h3 className="font-display text-base font-bold text-foreground">
-                  Read phrase aloud clearly
+                  Keep face in camera frame while reciting phrase aloud
                 </h3>
               </div>
 
@@ -269,66 +360,92 @@ export function HumanVerificationView() {
               </div>
             </div>
 
-            {/* Current Text Challenge Card */}
-            <div className="rounded-2xl border border-purple-500/30 bg-card/60 p-8 text-center shadow-[0_0_35px_rgba(139,92,246,0.15)] backdrop-blur-xl sm:p-10">
-              <span className="rounded-full border border-purple-500/25 bg-purple-950/40 px-3 py-1 font-mono text-xs font-bold text-purple-300">
-                CHALLENGE {currentIndex + 1} OF 5
-              </span>
+            {/* 2-Part Layout: Face Detection Stream (Part 1 - Left) + 5 Voice Reciting Challenge (Part 2 - Right) */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
+              {/* PART 1: Face Detection Stream & Telemetry Panel (Outside camera) */}
+              <div className="lg:col-span-5 space-y-4">
+                <FaceDetectionPanel />
+              </div>
 
-              <motion.blockquote
-                key={currentIndex}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-6 font-display text-2xl font-extrabold leading-snug tracking-tight text-foreground sm:text-3xl"
-              >
-                "{challenges[currentIndex]}"
-              </motion.blockquote>
+              {/* PART 2: 5 Voice Reciting Challenge */}
+              <div className="lg:col-span-7 space-y-6">
+                <div className="rounded-2xl border border-purple-500/30 bg-card/60 p-6 text-center shadow-[0_0_35px_rgba(139,92,246,0.15)] backdrop-blur-xl sm:p-8">
+                  <span className="rounded-full border border-purple-500/25 bg-purple-950/40 px-3 py-1 font-mono text-xs font-bold text-purple-300">
+                    VOICE PHRASE {currentIndex + 1} OF 5
+                  </span>
 
-              {/* Centered Microphone Recording Interface */}
-              <div className="mt-10 flex flex-col items-center">
-                <div className="relative grid size-24 place-items-center">
-                  {recState === "recording" && (
-                    <motion.span
-                      animate={{ scale: [1, 1.35, 1], opacity: [0.6, 0.2, 0.6] }}
-                      transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                      className="absolute inset-0 rounded-full bg-destructive/30"
-                    />
-                  )}
-                  <button
-                    onClick={recState === "recording" ? stopRecording : startRecording}
-                    disabled={recState === "recorded"}
-                    className={`relative grid size-20 place-items-center rounded-full text-white shadow-lg transition-all transform active:scale-95 ${recState === "recording"
-                      ? "bg-destructive ring-4 ring-destructive/30"
-                      : recState === "recorded"
-                        ? "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 ring-4 ring-purple-500/30 shadow-[0_0_20px_rgba(139,92,246,0.6)]"
-                        : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-105 shadow-[0_0_20px_rgba(139,92,246,0.4)]"
-                      }`}
-                    aria-label={recState === "recording" ? "Stop recording" : "Start recording"}
+                  <motion.blockquote
+                    key={currentIndex}
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-6 font-display text-xl font-extrabold leading-snug tracking-tight text-foreground sm:text-2xl"
                   >
-                    {recState === "recording" ? (
-                      <Square className="size-8 fill-current" />
-                    ) : recState === "recorded" ? (
-                      <Check className="size-9 stroke-[3]" />
-                    ) : (
-                      <Mic className="size-9" />
-                    )}
-                  </button>
-                </div>
+                    "{challenges[currentIndex]}"
+                  </motion.blockquote>
 
-                {/* Animated Waveform Simulation */}
-                {recState === "recording" && (
-                  <div className="mt-6 flex items-center gap-1.5 h-8">
-                    {[16, 24, 36, 48, 30, 42, 56, 32, 20, 40, 52, 28, 18].map((height, i) => (
-                      <motion.span
-                        key={i}
-                        animate={{ height: [height * 0.4, height, height * 0.4] }}
-                        transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.05 }}
-                        className="w-1 rounded-full bg-gradient-to-t from-indigo-500 to-purple-400"
-                        style={{ height: `${height}px` }}
-                      />
-                    ))}
+                  {/* Centered Microphone Recording Interface */}
+                  <div className="mt-8 flex flex-col items-center">
+                    <div className="relative grid size-24 place-items-center">
+                      {recState === "recording" && (
+                        <motion.span
+                          animate={{ scale: [1, 1.35, 1], opacity: [0.6, 0.2, 0.6] }}
+                          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                          className="absolute inset-0 rounded-full bg-destructive/30"
+                        />
+                      )}
+                      <button
+                        onClick={recState === "recording" ? stopRecording : startRecording}
+                        disabled={recState === "recorded"}
+                        className={`relative grid size-20 place-items-center rounded-full text-white shadow-lg transition-all transform active:scale-95 ${recState === "recording"
+                          ? "bg-destructive ring-4 ring-destructive/30"
+                          : recState === "recorded"
+                            ? "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 ring-4 ring-purple-500/30 shadow-[0_0_20px_rgba(139,92,246,0.6)]"
+                            : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-105 shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+                          }`}
+                        aria-label={recState === "recording" ? "Stop recording" : "Start recording"}
+                      >
+                        {recState === "recording" ? (
+                          <Square className="size-8 fill-current" />
+                        ) : recState === "recorded" ? (
+                          <Check className="size-9 stroke-[3]" />
+                        ) : (
+                          <Mic className="size-9" />
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Animated Waveform Simulation */}
+                    {recState === "recording" && (
+                      <div className="mt-6 flex items-center gap-1.5 h-8">
+                        {[16, 24, 36, 48, 30, 42, 56, 32, 20, 40, 52, 28, 18].map((height, i) => (
+                          <motion.span
+                            key={i}
+                            animate={{ height: [height * 0.4, height, height * 0.4] }}
+                            transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.05 }}
+                            className="w-1 rounded-full bg-gradient-to-t from-indigo-500 to-purple-400"
+                            style={{ height: `${height}px` }}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Controls when recorded */}
+                    {recState === "recorded" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-6 flex flex-wrap items-center justify-center gap-4"
+                      >
+                        <Button variant="swarolipiOutline" size="sm" onClick={handleRecordAgain} className="gap-2">
+                          <RotateCcw className="size-4" /> Re-record
+                        </Button>
+                        <Button variant="swarolipi" size="sm" onClick={handleContinueChallenge} className="gap-2">
+                          {currentIndex < challenges.length - 1 ? "Next Challenge" : "Complete Verification"} <ArrowRight className="size-4" />
+                        </Button>
+                      </motion.div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </motion.div>

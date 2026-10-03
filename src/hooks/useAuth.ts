@@ -19,6 +19,12 @@ export function useAuth() {
   useEffect(() => {
     setAuthorizedApps(authService.getAuthorizedApps(walletAddress));
 
+    if (walletAddress) {
+      authService.syncTokensFromBackend(walletAddress).then((apps) => {
+        if (apps) setAuthorizedApps(apps);
+      });
+    }
+
     const unsubscribe = authService.subscribe(() => {
       setAuthorizedApps(authService.getAuthorizedApps(walletAddress));
     });
@@ -29,12 +35,15 @@ export function useAuth() {
 
   const authorizeApp = (request: AuthRequest) => authService.authorizeApp(walletAddress, request);
 
-  const revokeApp = (appId: string) => authService.revokeApp(walletAddress, appId);
+  const authorizeAppAsync = (request: AuthRequest) => authService.authorizeAppAsync(walletAddress, request);
+
+  const revokeApp = (appId: string) => authService.revokeAppAsync(walletAddress, appId);
 
   return {
     authorizedApps,
     isAuthorized,
     authorizeApp,
+    authorizeAppAsync,
     revokeApp,
   };
 }

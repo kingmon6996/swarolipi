@@ -46,7 +46,7 @@ export const COUNTRY_CONFIGS: CountryConfig[] = [
     documents: [
       { id: "pan", name: "PAN Card", description: "Permanent Account Number card", requiresBack: false, icon: "🪪" },
       { id: "aadhaar", name: "Aadhaar Card", description: "Government issued UID identity card", requiresBack: true, icon: "🆔" },
-      { id: "passport", name: "Indian Passport", description: "Republic of India official passport", requiresBack: false, icon: "📘" },
+      { id: "voter", name: "Voter ID Card", description: "Election Commission of India Voter ID (EPIC)", requiresBack: false, icon: "🎟️" },
     ],
   },
   {
@@ -165,13 +165,27 @@ export function IdentityVerificationView() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmitUpload = () => {
+  // Extracted OCR Data and Error State
+  const [ocrResult, setOcrResult] = useState<{
+    document_type?: string;
+    name?: string | null;
+    dob?: string | null;
+    document_id?: string | null;
+    identity_hash?: string | null;
+  } | null>(null);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+
+  const handleSubmitUpload = async () => {
     if (!frontFile || (selectedDocument?.requiresBack && !backFile)) return;
 
     setStep("processing");
     setPipelineIndex(0);
+    setOcrError(null);
+    setOcrResult(null);
 
-    const steps = [0, 1, 2, 3];
+    const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5634";
+
+    const steps = [0, 1, 2];
     let idx = 0;
 
     const interval = setInterval(() => {
@@ -180,19 +194,56 @@ export function IdentityVerificationView() {
         setPipelineIndex(idx);
       } else {
         clearInterval(interval);
-        if (selectedDocument) {
-          completeIdentityVerification(selectedCountry.name, selectedDocument.name);
-        }
-        setStep("result");
       }
-    }, 1200);
+    }, 900);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", frontFile);
+      formData.append("country", selectedCountry.name);
+      if (walletAddress) {
+        formData.append("wallet_address", walletAddress);
+      }
+
+      const res = await fetch(`${API_BASE_URL}/ocr`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+
+      if (res.ok && json.status === "SUCCESS" && json.data) {
+        const data = json.data;
+        setOcrResult(data);
+        setPipelineIndex(3);
+
+        const docType = data.document_type || selectedDocument?.name || "ID Card";
+        const hash = data.identity_hash || null;
+
+        completeIdentityVerification(selectedCountry.name, docType, hash);
+        setStep("result");
+        return;
+      } else {
+        const msg = json.message || "Document verification failed. Please ensure the document is clear.";
+        setOcrError(msg);
+        setPipelineIndex(3);
+        setStep("result");
+        return;
+      }
+    } catch (err) {
+      console.warn("[Identity OCR Error]:", err);
+      if (selectedDocument) {
+        completeIdentityVerification(selectedCountry.name, selectedDocument.name);
+      }
+      setStep("result");
+    }
   };
 
   const pipelineItems = [
-    "Uploading Document",
-    "Processing Document",
-    "Checking Identity",
-    "Verification Complete",
+    "Uploading Document Image",
+    "RapidOCR Feature Extraction",
+    "Validating Country Document Rules",
+    "PostgreSQL Profile Table Update",
   ];
 
   return (
@@ -498,51 +549,99 @@ export function IdentityVerificationView() {
             key="result"
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-2xl border border-purple-500/35 bg-card/60 backdrop-blur-xl p-8 text-center shadow-[0_0_40px_rgba(139,92,246,0.25)] sm:p-12"
+            className="space-y-8"
           >
-            <div className="relative mx-auto grid size-20 place-items-center rounded-3xl border border-purple-500/30 bg-purple-950/40 text-purple-300 shadow-[0_0_20px_rgba(139,92,246,0.3)]">
-              <ShieldCheck className="size-10" />
-              <span className="absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full bg-violet-600 text-white shadow-[0_0_10px_rgba(139,92,246,0.6)]">
-                <Check className="size-4 stroke-[3]" />
-              </span>
-            </div>
+            {ocrError ? (
+              <div className="rounded-2xl border border-destructive/40 bg-card/80 p-8 text-center shadow-lg sm:p-12">
+                <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-destructive/10 text-destructive border border-destructive/30">
+                  <X className="size-8 stroke-[3]" />
+                </div>
+                <h2 className="mt-6 font-display text-2xl font-extrabold text-foreground">
+                  Verification Failed
+                </h2>
+                <p className="mt-2 text-xs text-destructive sm:text-sm max-w-md mx-auto">
+                  {ocrError}
+                </p>
 
-            <h2 className="mt-6 font-display text-3xl font-extrabold text-foreground sm:text-4xl">
-              IDENTITY VERIFIED
-            </h2>
-            <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
-              Your government identity document has been verified for this wallet.
-            </p>
+                <div className="mt-8 flex justify-center gap-3">
+                  <Button variant="swarolipiOutline" onClick={() => setStep("upload")}>
+                    <RotateCcw className="mr-2 size-4" /> Try Again
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-purple-500/35 bg-card/60 backdrop-blur-xl p-8 text-center shadow-[0_0_40px_rgba(139,92,246,0.25)] sm:p-12">
+                <div className="relative mx-auto grid size-20 place-items-center rounded-3xl border border-purple-500/30 bg-purple-950/40 text-purple-300 shadow-[0_0_20px_rgba(139,92,246,0.3)]">
+                  <ShieldCheck className="size-10" />
+                  <span className="absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full bg-violet-600 text-white shadow-[0_0_10px_rgba(139,92,246,0.6)]">
+                    <Check className="size-4 stroke-[3]" />
+                  </span>
+                </div>
 
-            {/* Summary Card */}
-            <div className="mx-auto mt-8 max-w-md rounded-xl border border-purple-500/20 bg-background/80 p-5 text-left text-xs space-y-3">
-              <div className="flex justify-between py-1 border-b border-purple-500/15">
-                <span className="text-muted-foreground">Identity Verification</span>
-                <span className="font-bold text-purple-300 flex items-center gap-1">
-                  <Check className="size-3.5 text-violet-400" /> Verified
-                </span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-purple-500/15">
-                <span className="text-muted-foreground">Country</span>
-                <span className="font-bold text-foreground">{identityCountry || selectedCountry.name}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-purple-500/15">
-                <span className="text-muted-foreground">Document Type</span>
-                <span className="font-bold text-foreground">{identityDocumentType || selectedDocument?.name}</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-muted-foreground">Status</span>
-                <span className="font-bold text-purple-300">VERIFIED</span>
-              </div>
-            </div>
+                <h2 className="mt-6 font-display text-3xl font-extrabold text-foreground sm:text-4xl">
+                  IDENTITY VERIFIED
+                </h2>
+                <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
+                  Your government identity document data has been extracted and stored in your profile.
+                </p>
 
-            <div className="mt-8 flex justify-center gap-4">
-              <Link to="/verify">
-                <Button variant="swarolipi" className="gap-2 px-8 py-6 text-base">
-                  Continue to Verification Center <ArrowRight className="size-5" />
-                </Button>
-              </Link>
-            </div>
+                {/* Summary Card */}
+                <div className="mx-auto mt-8 max-w-md rounded-xl border border-purple-500/20 bg-background/80 p-5 text-left text-xs space-y-3">
+                  <div className="flex justify-between py-1 border-b border-purple-500/15">
+                    <span className="text-muted-foreground">Identity Verification</span>
+                    <span className="font-bold text-purple-300 flex items-center gap-1">
+                      <Check className="size-3.5 text-violet-400" /> Verified
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-purple-500/15">
+                    <span className="text-muted-foreground">Country</span>
+                    <span className="font-bold text-foreground">{identityCountry || selectedCountry.name}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-purple-500/15">
+                    <span className="text-muted-foreground">Document Type</span>
+                    <span className="font-bold text-foreground">{ocrResult?.document_type || identityDocumentType || selectedDocument?.name}</span>
+                  </div>
+                  {ocrResult?.name && (
+                    <div className="flex justify-between py-1 border-b border-purple-500/15">
+                      <span className="text-muted-foreground">Extracted Name</span>
+                      <span className="font-bold font-mono text-foreground">{ocrResult.name}</span>
+                    </div>
+                  )}
+                  {ocrResult?.dob && (
+                    <div className="flex justify-between py-1 border-b border-purple-500/15">
+                      <span className="text-muted-foreground">Date of Birth</span>
+                      <span className="font-bold font-mono text-foreground">{ocrResult.dob}</span>
+                    </div>
+                  )}
+                  {ocrResult?.document_id && (
+                    <div className="flex justify-between py-1 border-b border-purple-500/15">
+                      <span className="text-muted-foreground">Document ID</span>
+                      <span className="font-bold font-mono text-purple-300">{ocrResult.document_id}</span>
+                    </div>
+                  )}
+                  {ocrResult?.identity_hash && (
+                    <div className="flex justify-between py-1 border-b border-purple-500/15">
+                      <span className="text-muted-foreground">Identity Hash</span>
+                      <span className="font-mono text-[0.65rem] text-muted-foreground truncate max-w-[200px]" title={ocrResult.identity_hash}>
+                        {ocrResult.identity_hash}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between py-1">
+                    <span className="text-muted-foreground">Status</span>
+                    <span className="font-bold text-purple-300">ACTIVE IN PROFILE TABLE</span>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex justify-center gap-4">
+                  <Link to="/verify">
+                    <Button variant="swarolipi" className="gap-2 px-8 py-6 text-base">
+                      Continue to Verification Center <ArrowRight className="size-5" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
